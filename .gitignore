@@ -1,0 +1,7 @@
+accounts/migrations
+accounts/__pycache__
+gamesplayed/migrations
+gamesplayed/__pycache__
+wixana/__pycache__
+wixana/settings.py
+key.txt
