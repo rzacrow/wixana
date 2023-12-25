@@ -1,6 +1,6 @@
 {% extends "../base.html" %}
 
-{% block title %}Sign Up{% endblock %}
+{% block title %}Sign in{% endblock %}
 
 {% block body %}
 {% load static %}
@@ -18,11 +18,11 @@
                     {% endfor %}
                     {% endif %}
 
-                    <h4 class="font-bold color-white">Sign Up</h4>
+                    <h4 class="font-bold color-white">Sign In</h4>
                     <form method='post' action='' class="full-width from-top-25 color-white" novalidate>
                         {% csrf_token %}
-                        {{form.as_div}}
-                        <input type='submit' value='Join' class="btn btn-submit">
+                        {{ form.as_div }}
+                        <input type='submit' value='Sign in' class="btn btn-submit">
                         <div class="col">
                             <a href="https://discord.com/api/oauth2/authorize?client_id=1187671686179467285&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.1%3A8000%2Fsignup%2Fdiscord%2Fresponse%2F&scope=email+identify" class="from-top-10 discord-button btn">
                                 <i class="bi bi-discord"></i> &nbsp; Connect With Discord
@@ -31,10 +31,16 @@
                     </form>
 
                     
-                    <div class="form-check"><a href="{% url 'login' %}" class="center-icon-text from-top-10"><span class="material-symbols-outlined">
+                    <div class="form-check"><a href="{% url 'signup' %}" class="center-icon-text from-top-10"><span class="material-symbols-outlined">
                         login
-                        </span> &nbsp; Already on Wixana? Sign in</a>
+                        </span> &nbsp; Don't have account? Sign up</a>
                     </div>
+
+                    <div class="form-check"><a href="{% url 'signup' %}" class="center-icon-text from-top-10"><span class="material-symbols-outlined">
+                        vpn_key_off
+                        </span> &nbsp; Forget password</a>
+                    </div>
+
                 </div>
             </div>
         </div>

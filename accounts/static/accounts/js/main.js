@@ -5,9 +5,10 @@ var parent;
 
 for (label of labels){
     label.classList.add('form-label');
-    label.classList.add('vintage-text-color');
+    label.classList.add('color-white');
     parent = label.parentNode;
     parent.classList.add('mb-3');
+
 }
 
 

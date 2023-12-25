@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}پنل کاربری{% endblock %}
+
+
+{% block body %}
+{% load static %}
+<div class="back-color-fit">
+                                    <!-- Filter Date Time Modal -->
+                                    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                            <h4 class="modal-title fs-5" id="exampleModalLabel">ویرایش اطلاعات</h4>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+        
+                                            <form method="post" action="" class="form-control" enctype='multipart/form-data'>
+                                                <div class="modal-body">
+                                             
+                                                </div>
+            
+                                                <div class="modal-footer">
+                                                    <input type="submit" class="btn btn-primary" value="Edit">
+                                                </div>
+                                            </form>
+
+                                        </div>
+                                        </div>
+                                    </div>
+
+
+        <!-- Dashboard -->
+        <div class="row from-top-200">
+            <div class="flex-column">
+                <!-- Messages -->
+                {% if messages %}
+                {% for message in messages %}
+                    <div class="row rounded-md">
+                        <div class="col">
+                            <p class="font-bold">{{message}}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                {% endif %}
+
+
+                <!-- Notifications -->
+                {% if notifications %}
+                <div class="row from-top-10">
+                {% for notification in notifications %}
+                    <div class="row rounded-md">
+                        <div class="col">
+                            <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
+                                notifications
+                                </span>{{notification.title}}</h6 class="font-bold">
+                            <p>{{notification.caption}}</p>
+                        </div>
+                        <a href="{% url 'seen_notifications' %}">مشاهده شد</a>
+                    </div>
+                {% endfor %}
+                </div>
+                {% endif %}
+
+                
+
+                {% if is_superuser %}
+                    {% include 'accounts/owner_dashboard.html' %}
+                {% endif %}
+
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col">
+                            <p class="min-height-100"></p>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+</div>
+{% endblock %}
