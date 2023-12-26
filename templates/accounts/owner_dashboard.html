@@ -19,13 +19,13 @@
                             </div>
                         </button>
 
-                        <button class="nav-link center-icon-text color-white none-hover active" id="pills-dashboard-tap" data-bs-toggle="pill" data-bs-target="#pills-dashboard" type="button" role="tab" aria-controls="pills-dashboard" aria-selected="true">
+                        <!--<button class="nav-link center-icon-text color-white none-hover " id="pills-dashboard-tap" data-bs-toggle="pill" data-bs-target="#pills-dashboard" type="button" role="tab" aria-controls="pills-dashboard" aria-selected="false">
                             <span class="material-symbols-outlined">
                                 dashboard
                                 </span>&nbsp;Dashboard
-                        </button>
+                        </button> -->
 
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-users-tab" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="false">
+                        <button class="nav-link center-icon-text color-white none-hover active" id="pills-users-tab" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="true">
                             <span class="material-symbols-outlined">
                                 account_circle
                             </span>&nbsp;Users
@@ -75,7 +75,7 @@
 
                     <div class="tab-content" id="v-pills-tabContent">
                         <!-- Dashboard Tab -->
-                        <div class="tab-pane fade show active bg-transparent dashboard-detail padding-from-side" id="pills-dashboard" role="tabpanel" aria-labelledby="pills-dashboard-tap" tabindex="0">
+                        <!-- <div class="tab-pane fade show active bg-transparent dashboard-detail padding-from-side" id="pills-dashboard" role="tabpanel" aria-labelledby="pills-dashboard-tap" tabindex="0">
                             <div class="row">
                                 <div class="flex-column">
                                     <div class="col dashboard-detail-item">
@@ -83,9 +83,15 @@
                                             history
                                             </span>&nbsp;Recantly Actions
                                         </p>
-                                        <div class="content">
-                                            <p class="min-height-200 center-r-c">Nothing to show</p>
-                                        </div>
+                                        {% if recantly_actions %}
+                                            {% for ra in recantly_actions %}
+
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="content">
+                                                <p class="min-height-200 center-r-c">Nothing to show</p>
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -110,11 +116,11 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         
 
                         <!-- Users Tab -->
-                        <div class="tab-pane fade dashboard-detail padding-from-side" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
+                        <div class="tab-pane fade show active dashboard-detail padding-from-side" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
                             <div class="row">
                                 <div class="flex-row flex-between without-space">
                                         <div class="col dashboard-detail-item">

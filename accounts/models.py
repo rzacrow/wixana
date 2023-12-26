@@ -8,7 +8,7 @@ class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('O', 'Owner'),
         ('A', 'Admin'),
-        ('P','Player'),
+        ('B','Booster'),
         ('U', 'User')
     )
 

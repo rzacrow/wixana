@@ -207,17 +207,17 @@ class Logout(View):
 class Dashboard(View):
     def get(self, request):
         user = request.user
+        context = dict()
+        context['user'] = user
         if user.is_superuser:
             is_superuser = True
-            
+            context['member_count'] = owner_dashboard.get_cut_in_ir()
+            context['last_attendance'] = owner_dashboard.get_last_attendance()
+            context['recantly_actions'] = owner_dashboard.get_recantly_actions()
         else:
             is_superuser = None
         
-
-        context = {
-            'user' : user,
-            'is_superuser' : is_superuser,
-        }
+        context['is_superuser'] = is_superuser
 
         return render(request, 'accounts/dashboard.html', context)
 

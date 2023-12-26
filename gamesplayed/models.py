@@ -48,3 +48,10 @@ class AttendanceDetail(models.Model):
     player = models.ForeignKey(User, on_delete=models.PROTECT)
     missing_boss = models.IntegerField(default=0)
     cut = models.IntegerField()
+
+
+class CutInIR(models.Model):
+    amount = models.IntegerField()
+
+    def __str__(self) -> str:
+        return self.amount
