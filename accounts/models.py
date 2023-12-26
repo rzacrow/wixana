@@ -73,3 +73,17 @@ class TeamDetail(models.Model):
 
     def __str__(self) -> str:
         return f"{self.team.name} | {self.player.username}"
+
+
+class RecantlyAction(models.Model):
+    ACTION_STATUS_CHOICES = (
+        ('C', 'Create'),
+        ('R', 'Read'),
+        ('U', 'Update'),
+        ('D', 'Delete'),
+    )
+
+    date_time = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=1, choices=ACTION_STATUS_CHOICES, blank=False, null=False)
+    obg_from_model = models.CharField(max_length=128, blank=False, null=False)
+    obg_id = models.IntegerField(blank=False, null=False)
