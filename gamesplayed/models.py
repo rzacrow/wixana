@@ -1,11 +1,14 @@
 from django.db import models
 from accounts.models import User
 
+
 class RunType(models.Model):
     name = models.CharField(max_length=128, blank=True, null=False)
-    value = models.IntegerField(blank=False, null=False)
-
-
+    community = models.FloatField(default=63.5)
+    guild = models.FloatField(default=27.5)
+    def __str__(self) -> str:
+        return self.name
+    
 class Attendance(models.Model):
     ATTENDANCE_CHOICES = (
         ('A', 'Active'),
@@ -19,19 +22,15 @@ class Attendance(models.Model):
     status = models.CharField(max_length=1, choices=ATTENDANCE_CHOICES)
     
 
+
 class Guild(models.Model):
+    attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE, default=None)
     booster = models.IntegerField(default=0)
     gold_collector = models.IntegerField(default=0)
     guild_bank = models.IntegerField(default=0)
     total = models.IntegerField(default=0)
     in_house_customer_pot = models.IntegerField(default=0) #sum by total
     refunds = models.IntegerField(default=0) #negative by total
-
-class CutDistribution(models.Model):
-    attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE)
-    community = models.IntegerField(default=0)
-    guild = models.ForeignKey(Guild, on_delete=models.PROTECT)
-
 
 class Role(models.Model):
     name = models.CharField(max_length=128, blank=False, null=False)

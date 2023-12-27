@@ -13,7 +13,7 @@ from . import owner_dashboard
 from .forms import SignupForm, LoginForm
 
 #models
-from .models import User
+from .models import User, Wallet
 
 
 class Signup(View):
@@ -206,16 +206,30 @@ class Logout(View):
     
 class Dashboard(View):
     def get(self, request):
-        user = request.user
         context = dict()
+        user = request.user
         context['user'] = user
         if user.is_superuser:
+            #change user type to Owner in first login
+            if user.user_type != 'O':
+                user.user_type = 'O'
+                user.save()
+
+            #define is_superuser flag
             is_superuser = True
+
+
             context['member_count'] = owner_dashboard.get_cut_in_ir()
             context['last_attendance'] = owner_dashboard.get_last_attendance()
             context['recantly_actions'] = owner_dashboard.get_recantly_actions()
         else:
             is_superuser = None
+            if user.user_type == 'B':
+                ...
+            elif user.user_type == 'A':
+                ...
+            else:
+                ...
         
         context['is_superuser'] = is_superuser
 
