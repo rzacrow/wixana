@@ -1,11 +1,171 @@
 from django.contrib import admin
-from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutDistribution, CutInIR
+from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR, CutDistributaion
+from django.db import models
+from django.conf import settings
+from django.db.models import Sum
+from accounts.models import Wallet
+
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.forms import UserCreationForm
+
+class GuildInline(StackedInline):
+    model = Guild
+    readonly_fields = ['total', 'booster', 'gold_collector', 'guild_bank']
+    extra = 1
+    fieldsets = [(
+            "",
+            {
+                'fields' : [('in_house_customer_pot', 'refunds'), ('total', 'booster'), ('gold_collector', 'guild_bank')]
+            }
+        )
+    ]
+
+    def save_model(self, request, obj, form, change):
+        obj.total += obj.in_house_customer_pot
+        obj.total -= obj.refunds
+        obj.save()
+        super().save_model(request, obj, form, change)
+
+class CutDistributaionInline(StackedInline):
+    model = CutDistributaion
+    list_display = ['total_guild', 'community']
+    readonly_fields = ['total_guild', 'community']
+
+class AttendanceDetailInline(TabularInline):
+    model = AttendanceDetail
+    extra = 2
+
+    readonly_fields = ['cut']
+
+    fieldsets = (
+        (None, {
+            "fields": [
+                ('role', 'player'), 'missing_boss', 'cut'   
+            ],
+        }),
+    )
+    
+
+
+    
 @admin.register(Attendance)
 class AttendanceAdmin(ModelAdmin):
-    list_display = ['date_time', 'status', 'total_pot']
+
+    @admin.display(description="Date Created")
+    def date_time_show(self, obj):
+        return obj.date_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    list_display = ["date_time_show", 'status', 'total_pot']
+    list_filter = ['status', 'date_time']
+
+    ordering = ('status', '-date_time')
+
+    inlines = [
+        CutDistributaionInline,
+        GuildInline,
+        AttendanceDetailInline,
+    ]
+
+    fieldsets = [(
+            "Attendance",
+            {
+                'fields' : [('date_time'), ('run_type', 'status'), ('total_pot', 'boss_kill'), 'run_notes']
+            }
+        )
+    ]
+
+    readonly_preprocess_fields = {
+        "model_field_name": "html.unescape",
+        "other_field_name": lambda content: content.strip(),
+    }
+
+
+    formfield_overrides = {
+        models.TextField: {
+            "widget": WysiwygWidget,
+        }
+    }
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        try:
+            obj = Attendance.objects.get(id=object_id)
+            a_rt = obj.run_type
+            gd = Guild.objects.get_or_create(attendance=obj)
+            gd = gd[0]
+            total = (((int(a_rt.guild * obj.total_pot)) // 100) + gd.in_house_customer_pot) - gd.refunds
+            gd.total = total
+            gd.booster = (int(95 * total)) // 100
+            gd.gold_collector = (int(2 * total)) // 100
+            gd.guild_bank = (int(3 * total)) // 100
+            gd.save()
+
+            boosters = AttendanceDetail.objects.filter(attendane=obj)
+            if boosters:
+                for booster in boosters:
+                    booster.multiplier = (((obj.boss_kill - booster.missing_boss) / obj.boss_kill) + booster.role.value)
+                    booster.save()
+
+
+                sum_multiplier = boosters.aggregate(Sum('multiplier'))['multiplier__sum']
+                cut_per_booster = gd.booster // sum_multiplier
+                print(cut_per_booster)
+                for booster in boosters:
+                    booster.cut = int(cut_per_booster * booster.multiplier)
+                    booster.save()
+                
+        except:
+            pass
+
+        else:
+            cutdist = CutDistributaion.objects.get_or_create(attendance=obj, total_guild=gd)
+            cutdist = cutdist[0]
+            cutdist.community = ((int(a_rt.community * obj.total_pot)) // 100)
+            cutdist.save()
+
+        finally:
+            return super().change_view(request, object_id, form_url, extra_context)
+
+    def get_formsets_with_inlines(self, request, obj=None):
+        for inline in self.get_inline_instances(request, obj):
+            # hide MyInline in the add view
+            if not isinstance(inline, (CutDistributaionInline,GuildInline, AttendanceDetailInline)) or obj is not None:
+                yield inline.get_formset(request, obj), inline
+
+
+    def save_model(self, request, obj, form, change):
+        try:
+            a_rt = obj.run_type
+            gd = Guild.objects.get_or_create(attendance=obj)
+            gd = gd[0]
+            total = (((int(a_rt.guild * obj.total_pot)) // 100) + gd.in_house_customer_pot) - gd.refunds
+            gd.total = total
+            gd.booster = (int(95 * total)) // 100
+            gd.gold_collector = (int(2 * total)) // 100
+            gd.guild_bank = (int(3 * total)) // 100
+            gd.save()
+
+        except:
+            pass
+
+        else:
+            cutdist = CutDistributaion.objects.get_or_create(attendance=obj, total_guild=gd)
+            cutdist = cutdist[0]
+            cutdist.community = ((int(a_rt.community * obj.total_pot)) // 100)
+            cutdist.save()
+
+        finally:
+            if obj.status == 'C':
+                if obj.paid_status == False:
+                    boosters = AttendanceDetail.objects.filter(attendane=obj)
+                    if boosters:
+                        for b in boosters:
+                            wallet = Wallet.objects.get_or_create(player=b.player)
+                            wallet[0].amount += b.cut
+                            wallet[0].save()
+                    obj.paid_status = True
+                    obj.save()
+
+            super().save_model(request, obj, form, change)
 
 @admin.register(Role)
 class RoleAdmin(ModelAdmin):
@@ -13,8 +173,8 @@ class RoleAdmin(ModelAdmin):
 
 @admin.register(RunType)
 class RunTypeAdmin(ModelAdmin):
-    list_display = ['name', 'value']
+    list_display = ['name', 'community', 'guild']
 
 @admin.register(CutInIR)
 class CutInIR(ModelAdmin):
-    list_display = ['amount']
+    list_display = ['amount', 'date_time']
