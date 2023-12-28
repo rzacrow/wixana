@@ -180,8 +180,6 @@ class Login(View):
             data = form.cleaned_data
             password = data['password']
             username = data['username']
-            print(username)
-            print(password)
             #If a user with the entered profile is found
             user = authenticate(request, username=username,password=password)
             if user is not None:
@@ -221,7 +219,6 @@ class Dashboard(View):
 
             context['member_count'] = owner_dashboard.get_cut_in_ir()
             context['last_attendance'] = owner_dashboard.get_last_attendance()
-            context['recantly_actions'] = owner_dashboard.get_recantly_actions()
         else:
             is_superuser = None
             if user.user_type == 'B':

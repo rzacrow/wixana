@@ -1,4 +1,4 @@
-from .models import User, RecantlyAction
+from .models import User
 from gamesplayed.models import Attendance, CutInIR
 
 def member_count() -> str:
@@ -16,10 +16,6 @@ def get_last_attendance() -> str:
 def get_cut_in_ir():
     cut_in_ir = CutInIR.objects.filter().first()
     return cut_in_ir
-
-def get_recantly_actions():
-    get_last_10 = RecantlyAction.objects.filter().order_by('date_time')[0:10]
-    return get_last_10
 
 def booster_count():
     count = User.objects.filter(status='B').count()
