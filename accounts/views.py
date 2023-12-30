@@ -6,14 +6,13 @@ import requests
 from django.contrib.auth import authenticate, login, logout
 import shutil
 import os
-from . import owner_dashboard
-
+from . import booster_dashboard
 
 #forms
-from .forms import SignupForm, LoginForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm
 
 #models
-from .models import User, Wallet
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications
 
 
 class Signup(View):
@@ -204,31 +203,189 @@ class Logout(View):
     
 class Dashboard(View):
     def get(self, request):
-        context = dict()
-        user = request.user
-        context['user'] = user
-        if user.is_superuser:
-            #change user type to Owner in first login
-            if user.user_type != 'O':
-                user.user_type = 'O'
-                user.save()
+        if request.user.is_authenticated:
+            #Define Context
+            context = dict()
 
-            #define is_superuser flag
-            is_superuser = True
+            #get user 
+            user = request.user
 
+            #get user profile
+            context['profile_form'] = booster_dashboard.get_profile(pk=user.id)
 
-            context['member_count'] = owner_dashboard.get_cut_in_ir()
-            context['last_attendance'] = owner_dashboard.get_last_attendance()
-        else:
+            #if get query for add alts exist
+            altname =  request.GET.get('altname')
+            realm = request.GET.get('realm')
+
+            #A flag to identify the user level
             is_superuser = None
-            if user.user_type == 'B':
-                ...
-            elif user.user_type == 'A':
-                ...
-            else:
-                ...
-        
-        context['is_superuser'] = is_superuser
 
-        return render(request, 'accounts/dashboard.html', context)
+            if altname and realm:
+                if (altname == '') or (altname == None) or (int(realm) == 0):
+                    messages.add_message(request, messages.ERROR, 'You must fill all required fields')
+                else:
+                    realm_obj = Realm.objects.get(id=realm)
+                    alts = Alt.objects.filter(realm=realm_obj, name=altname, player=request.user)
+                    if not alts:
+                        Alt.objects.create(realm=realm_obj, name=altname, player=request.user)
+                        messages.add_message(request, messages.SUCCESS, 'Alt added successfully, after admin approval, it will be placed in your profile')
+                    else:
+                        messages.add_message(request, messages.WARNING, 'Alt with this detail already exist')
+
+            if user.is_superuser:
+                #change user type to Owner in first login
+                is_superuser = True
+                if user.user_type != 'O':
+                    user.user_type = 'O'
+                    user.save()
+                    return redirect('dashboard')
+                
+            if user.user_type != 'U':
+                context['alts'] = booster_dashboard.get_alts(pk=user.id)
+                context['realms'] = booster_dashboard.get_realms()
+                context['team'] = booster_dashboard.get_team(pk=user.id)
+                context['create_team_form'] = CreateTeamForm()
+                context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U")
+
+            
+            context['is_superuser'] = is_superuser
+
+            return render(request, 'accounts/dashboard.html', context)
+        else:
+            messages.add_message(request, messages.WARNING, 'Login required!')
+            return redirect('login')
+        
+
+    def post(self, request):
+        print(request.FILES)
+        profile_form = UpdateProfileForm(request.POST, request.FILES)
+        print(request.FILES['avatar'])
+        if profile_form.is_valid():
+            user = User.objects.get(id=request.user.id)
+            print(request.FILES['avatar'])
+            user.avatar = request.FILES['avatar']
+            user.save()
+            messages.add_message(request, messages.SUCCESS, "Profile updated successfully")
+            return redirect('dashboard')
+        else:
+            return render(request, 'accounts/dashboard.html', {'profile_form': profile_form})
+
+
+class CreateTeam(View):
+    def post(self, request):
+        create_team_form = CreateTeamForm(request.POST)
+        if create_team_form.is_valid():
+            data = create_team_form.cleaned_data
+            team = Team.objects.create(name=data['name'])
+            team.save()
+
+            TeamDetail.objects.create(team=team, player=request.user, team_role="Leader")
+            messages.add_message(request, messages.SUCCESS, 'Your team created successfully')
+            return redirect('dashboard')
+        else:
+            messages.add_message(request, messages.ERROR, f"Error team form: name is required")
+            return redirect('dashboard')
+        
+class LeftTheTeam(View):
+    def get(self, request, team_pk):
+        team = Team.objects.filter(id=team_pk).first()
+        team_detail = TeamDetail.objects.filter(team=team, player=request.user).first()
+        if team_detail:
+            is_leader = False
+            if team_detail.team_role == "Leader":
+                is_leader = True
+
+            team_detail.delete()
+            messages.add_message(request, messages.SUCCESS, f"You left team {team.name}")
+            if (TeamDetail.objects.filter(team=team).count()) < 1:
+                #if members of team equal to 0, removed the team 
+                team.delete()
+            elif is_leader:
+                #change leader team
+                next_leader = TeamDetail.objects.filter(team=team).first()
+                next_leader.team_role = "Leader"
+                next_leader.save()
+
+            return redirect('dashboard')
+        else:
+            messages.add_message(request, messages.ERROR, f"Request is not valid")
+            return redirect('dashboard')
+
+
+class TeamDetailLink(View):
+
+    def get(self, request, team_name, team_pk):
+        if request.user.is_authenticated:
+            team = Team.objects.filter(id=team_pk).first()
+
+            if team:
+                user_have_team = None
+                user = request.user
+                td = TeamDetail.objects.filter(team=team, player=user)
+                if td:
+                    user_have_team = True
+            else:
+                messages.add_message(request, messages.WARNING, 'Team not found')
+                return redirect('dashboard')
+            
+            context = {
+                'team' : team,
+                'user_have_team' : user_have_team
+            }
+
+            return render(request, 'accounts/team.html', context)
+        else:
+            messages.add_message(request, messages.WARNING, 'Login required!')
+            return redirect('login')
+    
+    def post(self, request, team_name, team_pk):
+        user_requested = request.user
+        if user_requested.user_type != 'U':
+            team = Team.objects.filter(id=team_pk).first()
+            TeamRequest.objects.create(player=user_requested, team=team)
+            messages.add_message(request, messages.SUCCESS, 'Your request to join the team has been sent')
+            return redirect('dashboard')
+        else:
+            messages.add_message(request, messages.ERROR, 'You are not allowed to join the team')
+            return redirect('dashboard')
+    
+
+class JoinTeamResponse(View):
+    def post(self, request):
+        data = request.POST['response']
+        team_id = request.POST['team']
+        username = request.POST['username']
+        team = Team.objects.filter(id=team_id).first()
+        player = User.objects.filter(username=username).first()
+
+        if data == 'accept':
+            if not TeamDetail.objects.filter(player=player):
+                TeamDetail.objects.create(team=team, player=player)
+                Notifications.objects.create(send_to=player, title="Join Team", caption=f"You are now a member of {team.name}")
+                messages.add_message(request, messages.SUCCESS, message=f"User {player.username} is now a member of your team")
+            else:
+                Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} accepted, but you are already have a team")
+                messages.add_message(request, messages.WARNING, message=f"User {player.username} already has a team")
+            
+            rq = TeamRequest.objects.get(team=team, player=player)
+            rq.status = "Verified"
+            rq.save()
+            return redirect('dashboard')
+        else:
+                Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} rejected.")
+                messages.add_message(request, messages.WARNING, message=f"User {player.username} rejected!")
+                rq = TeamRequest.objects.get(team=team, player=player)
+                rq.status = "Rejected"
+                rq.save()
+                return redirect('dashboard')
+        
+class SeenNotif(View):
+    def get(self, request):
+        if request.user.is_authenticated:
+            notif = Notifications.objects.filter(send_to=request.user)
+            for nf in notif:
+                nf.status = 'S'
+                nf.save()
+            
+        return redirect('dashboard')
 

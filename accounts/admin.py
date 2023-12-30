@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
-from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet
+from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -11,8 +11,8 @@ from django.contrib import messages
 # Register your models here.
 from django.forms.models import BaseInlineFormSet
 
-admin.site.unregister(Group)
 
+admin.site.unregister(Group)
 
 @admin.register(Realm)
 class Realm(ModelAdmin):
@@ -48,6 +48,15 @@ class AltInline(StackedInline):
     }
     extra = 1
 
+@admin.register(Alt)
+class AltAdmin(ModelAdmin):
+    list_display = ['name','player', 'status']
+    ordered = ['status']
+
+    def save_model(self, request, obj, form, change):
+        if 'status' in form.changed_data:
+            Notifications.objects.create(send_to=obj.player, title="Alt status", caption=f"Your Alt {obj.name} status changed by admin")
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(um)
@@ -64,8 +73,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
                 ]
             else:
                 self.inlines = [
-
                 ]
+
         ONE_MONTH = 30 * 24 * 60 * 60
         expiry = getattr(settings, "KEEP_LOGGED_DURATION", ONE_MONTH)
         request.session.set_expiry(expiry)

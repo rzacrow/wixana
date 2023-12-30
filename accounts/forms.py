@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django import forms
-from .models import User
+from .models import User, Team
 from django.core.exceptions import ValidationError
 
 class SignupForm(forms.Form):
@@ -88,3 +88,21 @@ class LoginForm(forms.Form):
         if (' ' in password):
             raise ValidationError('Password is not valid, Check that there are no spaces between letters')
         return password
+    
+
+class UpdateProfileForm(forms.Form):
+    avatar = forms.ImageField(allow_empty_file=True, required=True)
+    username = forms.CharField(max_length=128, required=True, widget=forms.TextInput(attrs={'readonly':'readonly'}), help_text=None)
+    email = forms.CharField(max_length=128, required=True, widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+class CreateTeamForm(ModelForm):
+    class Meta:
+        model = Team
+        fields = ['name']
+
+class TeamRequestForm(forms.Form):
+    RESPONSE_CHOICES = (
+        ('Accept', 'Accept'),
+        ('Reject', 'Reject'),
+    )
+    response = forms.ChoiceField(label="", required=True, widget=forms.RadioSelect, choices=RESPONSE_CHOICES)
