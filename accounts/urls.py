@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif
+from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, WalletUpdateDetail, AskingMoney
 
 
 urlpatterns = [
@@ -15,4 +15,8 @@ urlpatterns = [
     path('dashboard/team/<str:team_name>/<int:team_pk>/', TeamDetailLink.as_view(), name='team_detail'),
     path('dashboard/team/join/response/', JoinTeamResponse.as_view(), name='join_team_response'),
     path('dashboard/notifications/seen/', SeenNotif.as_view(), name="seen_notifications"),
+
+    #wallet url
+    path('dashboard/wallet/update/', WalletUpdateDetail.as_view(), name="card_detail_update"),
+    path('dashboard/wallet/askink/money/', AskingMoney.as_view(), name="asking_money"),
 ]

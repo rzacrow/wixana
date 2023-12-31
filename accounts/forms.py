@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django import forms
-from .models import User, Team
+from .models import User, Team, Wallet
 from django.core.exceptions import ValidationError
 
 class SignupForm(forms.Form):
@@ -106,3 +106,10 @@ class TeamRequestForm(forms.Form):
         ('Reject', 'Reject'),
     )
     response = forms.ChoiceField(label="", required=True, widget=forms.RadioSelect, choices=RESPONSE_CHOICES)
+
+
+class WalletForm(ModelForm):
+    class Meta:
+        model = Wallet
+        fields = ['card_number', 'IR', 'card_full_name']
+

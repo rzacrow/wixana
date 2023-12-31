@@ -9,10 +9,11 @@ import os
 from . import booster_dashboard
 
 #forms
-from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction
+from gamesplayed.models import CutInIR
 
 
 class Signup(View):
@@ -245,7 +246,13 @@ class Dashboard(View):
                 context['realms'] = booster_dashboard.get_realms()
                 context['team'] = booster_dashboard.get_team(pk=user.id)
                 context['create_team_form'] = CreateTeamForm()
-                context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U")
+                context['matches'] = booster_dashboard.get_matches(pk=user.id)
+                context['wallet'] = booster_dashboard.get_wallet(pk=user.id)
+                context['wallet_report'] = booster_dashboard.wallet_report(pk=user.id)
+                context['cut_per_ir'] = booster_dashboard.cut_per_ir()
+                context['transactions'] = booster_dashboard.transactions(pk=user.id)
+                
+            context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U")
 
             
             context['is_superuser'] = is_superuser
@@ -313,9 +320,12 @@ class LeftTheTeam(View):
 
 
 class TeamDetailLink(View):
-
     def get(self, request, team_name, team_pk):
         if request.user.is_authenticated:
+            if request.user.user_type == 'U':
+                messages.add_message(request, messages.WARNING, 'You are not allowed to see this content')
+                return redirect('dashboard')
+            
             team = Team.objects.filter(id=team_pk).first()
 
             if team:
@@ -328,6 +338,7 @@ class TeamDetailLink(View):
                 messages.add_message(request, messages.WARNING, 'Team not found')
                 return redirect('dashboard')
             
+
             context = {
                 'team' : team,
                 'user_have_team' : user_have_team
@@ -389,3 +400,57 @@ class SeenNotif(View):
             
         return redirect('dashboard')
 
+
+class WalletUpdateDetail(View):
+    def post(self, request):
+        wallet_form = WalletForm(request.POST)
+        if wallet_form.is_valid():
+            data = wallet_form.cleaned_data
+            wallet = Wallet.objects.get_or_create(player=request.user)
+            wallet = wallet[0]
+            wallet.card_full_name = data['card_full_name']
+            wallet.card_number = data['card_number']
+            wallet.IR = data['IR']
+            wallet.save()
+
+            messages.add_message(request, messages.SUCCESS, 'Wallet detail, updated successfully')
+            return redirect('dashboard')
+        else:
+            messages.add_message(request, messages.ERROR, wallet_form.errors)
+            return redirect('dashboard')
+        
+
+class AskingMoney(View):
+    def post(self, request):
+        if request.user.is_authenticated:
+            user = request.user
+            if user.user_type != 'U':
+                currency = request.POST['asking_money_type']
+                amount = int(request.POST['asking_money_amount'])
+                wallet = Wallet.objects.get(player=user)
+                if amount <= wallet.amount:
+                    if amount >= 1:
+                        wallet.amount -= amount
+                        wallet.save()
+                        if currency == 'IR':
+                            try:
+                                cut_in_ir = CutInIR.objects.last()
+                                cut_in_ir = int(cut_in_ir.amount)
+                            except:
+                                Transaction.objects.create(requester=user, amount=amount, currency=currency, caption="there was a problem to convert the rate, the amount mentioned is in Cut")
+                            else:
+                                print(amount)
+                                amount = amount * cut_in_ir
+                                print(amount)
+                                Transaction.objects.create(requester=user, amount=amount, currency=currency)
+                            messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
+                        else:        
+                            Transaction.objects.create(requester=user, amount=amount, currency=currency)
+                            messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
+                    else:
+                        messages.add_message(request, messages.WARNING, 'Payment request in not valid')
+
+                else:
+                    messages.add_message(request, messages.WARNING, 'Your wallet balance is not enough')
+
+        return redirect('dashboard')

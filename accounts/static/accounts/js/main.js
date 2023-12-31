@@ -35,3 +35,13 @@ for (radio of radioes){
     second_parent.classList.remove('mb-3');
     second_parent.classList.add('col-12');
 }
+
+window.onload = function(){
+    document.getElementById('cut_to_ir_calculate').onclick = function(e){
+        let cut_value = document.getElementById("currency_exchange").value;
+        let cut_in_ir_price = document.getElementById("cut_in_ir_price").value;
+        let cut_in_ir = cut_value * cut_in_ir_price;
+        alert(cut_value + " cut at the last price is equal to " + cut_in_ir + " IR");
+        return true;
+    }
+ }

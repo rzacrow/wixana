@@ -66,7 +66,7 @@
                         <div class="tab-pane fade show active dashboard-detail padding-from-side" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
                             <div class="row">
                                 <div class="flex-column">
-                                            <div class="col dashboard-detail-item">                                        
+                                            <div class="col dashboard-detail-item" id="user-detail">                                        
                                                 <div class="content">
 
                                                         <div class="row padding-25">
@@ -87,7 +87,7 @@
                                                                             <img src="{% if user.avatar_hash %}../../{{user.avatar_hash}}{% elif user.avatar %}{{user.avatar.url}}{% else %}{% static '../media/profile/profile-icon.png' %}{%endif %}" class="image-profile-detail shadow-lg"> 
                                                                         </div>
                                                                         {{profile_form.as_div}}
-                                                                        <input type="submit" value="Update" class="btn color-white btn-light">
+                                                                        <input type="submit" value="Update" class="btn btn-outline-light">
                                                                     </form>
                                                                 {% else %}
                                                                     <p class="min-height-200 center-r-c">Nothing to show</p>
@@ -150,7 +150,7 @@
                                                                         </div>
 
                                                                         <div class="mb-3">
-                                                                            <input type="submit" value="Add" class="btn color-white btn-light">
+                                                                            <input type="submit" value="Add" class="btn btn-outline-light">
                                                                         </div>
                                                                     </form>
                                                                 </div>
@@ -173,164 +173,167 @@
                         <div class="tab-pane fade dashboard-detail" id="v-pills-teams" role="tabpanel" aria-labelledby="v-pills-teams-tab" tabindex="0">
                             <div class="row">
                                     {% if team %}
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                group
-                                                </span>&nbsp;{{team.detail.name}}
-                                        </p>
+                                        <div class="col dashboard-detail-item">
+                                            <p class="center-icon-text">
+                                                <span class="material-symbols-outlined">
+                                                    group
+                                                    </span>&nbsp;{{team.detail.name}}
+                                            </p>
 
-                                        <div class="content">
-                                            <div class="row">
+                                            <div class="content">
+                                                <div class="row">
 
-                                                <div class="col-lg-3"></div>
+                                                    <div class="col-lg-3"></div>
 
-                                                <div class="col-lg-6 from-top-25">
-                                                    <table class="table">
-                                                        <thead>
-                                                            <th class="bg-transparent color-white-important">user</th>
-                                                            <th class="bg-transparent color-white-important">Team Role</th>
-                                                        </thead>
-                                                        {% for member in team.members%}
-                                                            <tr>
-                                                                <td class="bg-transparent color-white-important">{{member.player.username}}</td>
-                                                                <td class="bg-transparent color-white-important">{{member.team_role}}</td>
-                                                            </tr>
-                                                        {% endfor %}
-                                                    </table>
-                                                    <br>
-                                                    <div class="flex-between flex-column">
-                                                        
-                                                        <div class="center-icon-text from-top-25">
-                                                            <span class="material-symbols-outlined">
-                                                                link
-                                                                </span>&nbsp;Address: &nbsp;<span class="badge bg-danger">{{team.detail.team_url}}</span>
-                                                        </div>
-
-                                                        <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-light center-icon-text color-purpole from-top-15">
-                                                            <span class="material-symbols-outlined">
-                                                                door_back
-                                                                </span>&nbsp;Left the team
-                                                        </a>
-                                                    </div>
-                                                    <br>
-                                                </div>
-
-                                                <div class="col-lg-3"></div>
-                                        </div>
-                                    </div>
-                                    
-                                    {% if team.is_leader_team %}
-                                    <div class="flex-column">
-                                    <div class="col">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                group_add
-                                                </span>&nbsp;New request
-                                        </p>
-
-                                        <div class="content">
-                                            <div class="row">
-
-                                                <div class="col-lg-3"></div>
-
-                                                <div class="col-lg-6 from-top-25">
-                                                    {% if team.new_requests %}
-                                                            {% for request in team.new_requests%}
-                                                                <div class="row">
-                                                                    <div class="col-12 color-white-important">
-                                                                        User: {{request.player}}
-                                                                    </div>
-
-                                                                    <div class="col-10">
-                                                                        <form method="post" action="{% url 'join_team_response' %}" class="row row-cols-lg-auto g-3 align-items-center margin-bottom-less">
-                                                                            {% csrf_token %}
-                                                                            <input type="hidden" name="username" value="{{request.player}}">
-                                                                            <input type="hidden" name="team" value="{{team.detail.id}}">
-
-                                                                            <div class="col-12">
-                                                                                <div class="form-check form-check-inline">
-                                                                                    <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="accept" checked>
-                                                                                    <label class="form-check-label" for="inlineRadio1">Accept</label>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="col-12">
-                                                                                <div class="form-check form-check-inline">
-                                                                                    <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="reject">
-                                                                                    <label class="form-check-label" for="inlineRadio1">Reject</label>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="col-12">
-                                                                                <input type="submit" value="Submit" class="btn btn-submit margin-top-16">
-                                                                            </div>
-                                                                        </form>
-                                                                    </div>
-                                                                </div>
-                                                                <hr>
+                                                    <div class="col-lg-6 from-top-25">
+                                                        <table class="table">
+                                                            <thead>
+                                                                <th class="bg-transparent color-white-important">user</th>
+                                                                <th class="bg-transparent color-white-important">Team Role</th>
+                                                            </thead>
+                                                            {% for member in team.members%}
+                                                                <tr>
+                                                                    <td class="bg-transparent color-white-important">{{member.player.username}}</td>
+                                                                    <td class="bg-transparent color-white-important">{{member.team_role}}</td>
+                                                                </tr>
                                                             {% endfor %}
-                                                    {% else %}
-                                                        <p class="min-height-200 center-r-c">There is no request</p>
-                                                    {% endif %}
+                                                        </table>
+                                                        <br>
+                                                        <div class="flex-between flex-column">
+                                                            
+                                                            <div class="center-icon-text from-top-25">
+                                                                <span class="material-symbols-outlined">
+                                                                    link
+                                                                    </span>&nbsp;Address: &nbsp;<span class="badge bg-danger">{{team.detail.team_url}}</span>
+                                                            </div>
+
+                                                            <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-light center-icon-text color-purpole from-top-15">
+                                                                <span class="material-symbols-outlined">
+                                                                    door_back
+                                                                    </span>&nbsp;Left the team
+                                                            </a>
+                                                        </div>
+                                                        <br>
+                                                    </div>
+
+                                                    <div class="col-lg-3"></div>
                                                 </div>
-
-
-                                                <div class="col-lg-3"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    {% endif %}
+                                    
+                                            {% if team.is_leader_team %}
+                                                <div class="flex-column dashboard-detail-item from-top-25">
+                                                        <div class="col">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    group_add
+                                                                    </span>&nbsp;New request
+                                                            </p>
+
+                                                            <div class="content">
+                                                                <div class="row">
+
+                                                                    <div class="col-lg-3"></div>
+
+                                                                    <div class="col-lg-6 from-top-25">
+                                                                        {% if team.new_requests %}
+                                                                                {% for request in team.new_requests%}
+                                                                                    <div class="row">
+                                                                                        <div class="col-12 color-white-important">
+                                                                                            User: {{request.player}}
+                                                                                        </div>
+
+                                                                                        <div class="col-10">
+                                                                                            <form method="post" action="{% url 'join_team_response' %}" class="row row-cols-lg-auto g-3 align-items-center margin-bottom-less">
+                                                                                                {% csrf_token %}
+                                                                                                <input type="hidden" name="username" value="{{request.player}}">
+                                                                                                <input type="hidden" name="team" value="{{team.detail.id}}">
+
+                                                                                                <div class="col-12">
+                                                                                                    <div class="form-check form-check-inline">
+                                                                                                        <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="accept" checked>
+                                                                                                        <label class="form-check-label" for="inlineRadio1">Accept</label>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="col-12">
+                                                                                                    <div class="form-check form-check-inline">
+                                                                                                        <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="reject">
+                                                                                                        <label class="form-check-label" for="inlineRadio1">Reject</label>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="col-12">
+                                                                                                    <input type="submit" value="Submit" class="btn btn-submit margin-top-16">
+                                                                                                </div>
+                                                                                            </form>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <hr>
+                                                                                {% endfor %}
+                                                                        {% else %}
+                                                                            <p class="min-height-200 center-r-c">There is no request</p>
+                                                                        {% endif %}
+                                                                    </div>
+
+
+                                                                    <div class="col-lg-3"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                </div>
+                                            {% endif %}
 
                                     {% else %}
-                                    <div class="col dashboard-detail-item from-top-25-mobile">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                group_add
-                                                </span>&nbsp;Create Team
-                                        </p>
+                                            <div class="col dashboard-detail-item from-top-25-mobile">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        group_add
+                                                        </span>&nbsp;Create Team
+                                                </p>
 
-                                        <div class="content">
-                                            <div class="row">
+                                                <div class="content">
+                                                    <div class="row">
 
-                                                <div class="col-lg-3"></div>
-                                                
-                                                <div class="col-lg-6 padding-25">
-                                                <form method="post" action="{% url 'create_team' %}">
-                                                    {% csrf_token %}
-                                                    {{ create_team_form.as_div }}
-                                                    <input type="submit" value="Create" class="btn btn-light color-white">
-                                                </form>
+                                                        <div class="col-lg-3"></div>
+                                                        
+                                                        <div class="col-lg-6 padding-25">
+                                                        <form method="post" action="{% url 'create_team' %}">
+                                                            {% csrf_token %}
+                                                            {{ create_team_form.as_div }}
+                                                            <input type="submit" value="Create" class="btn btn-submit color-white">
+                                                        </form>
 
-                                                <div class="col-lg-3"></div>
+                                                        <div class="col-lg-3"></div>
 
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                diversity_3
-                                                </span>&nbsp;Search Team
-                                        </p>
+                                            <div class="col dashboard-detail-item">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        diversity_3
+                                                        </span>&nbsp;Search Team
+                                                </p>
 
-                                        <div class="content">
-                                            <div class="row">
+                                                <div class="content">
+                                                    <div class="row">
 
-                                                <div class="col-lg-3"></div>
-                                                
-                                                <div class="col-lg-6 padding-25">
-                                                <form method="post" action="">
-                                                    {% csrf_token %}
-                                                    {{ create_team_form.as_div }}
-                                                    <input type="submit" value="Search" class="btn btn-light color-white">
-                                                </form>
+                                                        <div class="col-lg-3"></div>
+                                                        
+                                                        <div class="col-lg-6 padding-25">
+                                                        <form method="post" action="">
+                                                            {% csrf_token %}
+                                                            {{ create_team_form.as_div }}
+                                                            <input type="submit" value="Search" class="btn btn-outline-light">
+                                                        </form>
 
-                                                <div class="col-lg-3"></div>
+                                                        <div class="col-lg-3"></div>
 
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
                                     {% endif %}
                             </div>
                         </div>
@@ -339,58 +342,67 @@
                         <!-- Recent Match settings -->
                         <div class="tab-pane fade dashboard-detail" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
                             <div class="row">
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                checklist
-                                                </span>&nbsp;Role
-                                        </p>
-
-                                        <div class="content">
-                                            <p class="min-height-200 center-r-c">no data to Show</p>
+                                        <div class="col dashboard-detail-item from-top-25-mobile">
+                                            <p class="center-icon-text">
+                                                <span class="material-symbols-outlined">
+                                                    stadia_controller
+                                                    </span>&nbsp;Active Cycle
+                                            </p>
+    
+                                            <div class="content padding-15">
+                                                {% if matches.active_cycle %}
+                                                    <table class="table">
+                                                        <thead>
+                                                            <th class="bg-transparent color-white-important">Date time</th>
+                                                            <th class="bg-transparent color-white-important">Role</th>
+                                                            <th class="bg-transparent color-white-important">Missing Boss</th>
+                                                            <th class="bg-transparent color-white-important">cut</th>
+                                                        </thead>
+                                                        {% for match in matches.active_cycle %}
+                                                            <tr>
+                                                                <td class="bg-transparent color-white-important">{{match.attendane.date_time|date:"Y-m-d H:i:s" }}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.role}}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.cut}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </table>
+                                                {% else %}
+                                                    <p class="min-height-200 center-r-c">Do not have started match yet</p>
+                                                {% endif %}
+                                            </div>
                                         </div>
 
-                                        <hr>
-                                        <form>
-                                            <input type="text" name="role" placeholder="Role name..." class="form-control">
-                                            <input type="submit" value="Create" class="btn btn-light from-top-15">
-                                        </form>
-                                    </div>
-
-                                    <div class="col dashboard-detail-item from-top-25-mobile">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                account_balance
-                                                </span>&nbsp;Run type
-                                        </p>
-
-                                        <div class="content">
-                                            <p class="min-height-200 center-r-c">no data to Show</p>
-                                        </div>
-
-                                        <hr>
-                                        <form>
-                                            <input type="text" name="run_type" placeholder="Run type..." class="form-control">
-                                            <input type="submit" value="Create" class="btn btn-light from-top-15">
-                                        </form>
-                                    </div>
 
                                         <div class="col dashboard-detail-item from-top-25-mobile">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
-                                                    savings
-                                                    </span>&nbsp;Realm
+                                                    history
+                                                    </span>&nbsp;Match History
                                             </p>
     
-                                            <div class="content">
-                                                <p class="min-height-200 center-r-c">no data to Show</p>
+                                            <div class="content padding-15">
+                                                {% if matches.closed_cycle %}
+                                                    <table class="table">
+                                                        <thead>
+                                                            <th class="bg-transparent color-white-important">Date time</th>
+                                                            <th class="bg-transparent color-white-important">Role</th>
+                                                            <th class="bg-transparent color-white-important">Missing Boss</th>
+                                                            <th class="bg-transparent color-white-important">cut</th>
+                                                        </thead>
+                                                        {% for match in matches.closed_cycle %}
+                                                            <tr>
+                                                                <td class="bg-transparent color-white-important">{{ match.attendane.date_time|date:"Y-m-d H:i:s" }}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.role}}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.cut}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </table>
+                                                {% else %}
+                                                    <p class="min-height-200 center-r-c">Do not have a finished match yet</p>
+                                                {% endif %}
                                             </div>
-    
-                                            <hr>
-                                            <form>
-                                                <input type="text" name="realm" placeholder="Realm name..." class="form-control">
-                                                <input type="submit" value="Create" class="btn btn-light from-top-15">
-                                            </form>
                                         </div> 
                             </div>
                         </div>
@@ -400,88 +412,151 @@
                         <!-- Wallet -->
                         <div class="tab-pane fade dashboard-detail" id="pills-wallet" role="tabpanel" aria-labelledby="pills-wallet-tab" tabindex="0">
                             <div class="row">
+                                    <!-- Payment Request -->
                                     <div class="col dashboard-detail-item">
                                         <p class="center-icon-text">
                                             <span class="material-symbols-outlined">
                                                 add_card
-                                                </span>&nbsp;Deposit Request
+                                                </span>&nbsp;Payment request
                                         </p>
+                                        <hr>
 
                                         <div class="content">
-                                            <p class="min-height-200 center-r-c">no data to Show</p>
+                                            <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
+                                                {% csrf_token %}
+                                                <label class="form-label">Amount</label>
+                                                <input type="number" placeholder="amount in cut..." name="asking_money_amount">
+
+                                                <div class="mb-3 from-top-15">
+                                                    <label for="asking_money_type" class="form-label">Payment method</label>
+                                                    <select name="asking_money_type" id="asking_money_type" class="form-select">
+                                                        <option value="CUT" selected>Cut</option>
+                                                        <option value="IR">IR</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <input type="submit" value="Send" class="btn btn-porpule color-white">
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
 
+                                    <!-- Financial Reports -->
                                     <div class="col dashboard-detail-item from-top-25-mobile">
                                         <p class="center-icon-text">
                                             <span class="material-symbols-outlined">
                                                 query_stats
                                                 </span>&nbsp;Report
                                         </p>
-
+                                        <hr>
                                         <div class="content">
-                                            <p class="min-height-200 center-r-c">no data to Show</p>
+                                            {% if wallet_report %}
+                                                <div class="flex-between alert alert-warning">
+                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                        monetization_on
+                                                        </span>&nbsp;Wallet Balance:</div>
+                                                    <div>$ {{wallet_report.amount}}</div>
+                                                </div>
+
+                                                <div class="flex-between alert">
+                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                        looks_one
+                                                        </span>&nbsp;Today's Income:</div>
+                                                    <div>$ {{wallet_report.amount}}</div>
+                                                </div>
+
+                                                <div class="flex-between alert">
+                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                        calendar_month
+                                                        </span>&nbsp;Income this month:</div>
+                                                    <div>$ {{wallet_report.amount}}</div>
+                                                </div>
+                                            {% else %}
+                                                <p class="min-height-200 center-r-c">there aren't any reports</p>
+                                            {% endif %}
                                         </div>
                                     </div>
 
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                currency_exchange
-                                                </span>&nbsp; Currency Exchange
-                                        </p>
-                                        <hr>
-                                        <form>
-                                            <input type="text" name="currency_exchange" placeholder="Cut to IR..." class="form-control">
-                                            <input type="submit" value="Create" class="btn btn-light from-top-15">
-                                        </form>
-                                    </div>
 
 
-                                    <div class="flex-column from-top-25">
-                                        <div class="col dashboard-detail-item">
-                                            <p class="center-icon-text">
-                                                <span class="material-symbols-outlined">
-                                                    history
-                                                    </span>&nbsp;Transaction History
-                                            </p>
+                                    <!-- Transaction -->
+                                    <div class="flex-column"></div>
+                                            <div class="col dashboard-detail-item from-top-25">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        history
+                                                        </span>&nbsp;Transaction History
+                                                </p>
+                                                
+                                                {% if transactions %}
+                                                    <table class="table table-warning">
+                                                        <thead>
+                                                            <th class="">Status</th>
+                                                            <th class="">Date of request</th>
+                                                            <th class="">details</th>
+                                                            <th class="">Paid date</th>
+                                                            <th class="">Currency</th>
+                                                            <th class="">Amount</th>
+                                                        </thead>
+                                                        {% for ts in transactions %}
+                                                            <tr>
+                                                                <td class="">{{ts.status}}</td>
+                                                                <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
+                                                                <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
+                                                                <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
+                                                                <td class="">{{ts.currency}}</td>
+                                                                <td class="">$ {{ts.amount}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </table>
+                                                {% else %}
+                                                    <div class="content">
+                                                        <p class="min-height-200 center-r-c">there aren't any transaction</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div> 
 
-                                            <div class="content">
-                                                <p class="min-height-200 center-r-c">no data to Show</p>
+                                            <div class="flex-column"></div>
+
+                                            <!-- Wallet Detail -->
+                                            <div class="col dashboard-detail-item from-top-25">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        wallet
+                                                        </span>&nbsp;Wallet Detail
+                                                </p>
+                                                
+                                                <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
+                                                    {% csrf_token %}
+                                                    <div class="bank-card">
+                                                        {{wallet.as_div}}
+                                                    </div>
+                                                    <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
+                                                </form>
                                             </div>
-                                        </div> 
-                                    </div>
 
 
-                                    <div class="col dashboard-detail-item from-top-25">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                featured_seasonal_and_gifts
-                                                </span>&nbsp;Gift
-                                        </p>
-                                        <hr>
-                                        <form>
-                                            <input type="text" name="gift_user_recived" placeholder="Username..." class="form-control">
-                                            <input type="text" name="gift_amount" placeholder="Amount..." class="form-control from-top-15">
-
-                                            <input type="submit" value="Submit" class="btn btn-light from-top-15">
-                                        </form>
-                                    </div>
-
-                                    <div class="col dashboard-detail-item from-top-25">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                gpp_bad
-                                                </span>&nbsp;Mulct
-                                        </p>
-                                        <hr>
-                                            <form>
-                                            <input type="text" name="gift_user_recived" placeholder="Username..." class="form-control">
-                                            <input type="text" name="gift_amount" placeholder="Amount..." class="form-control from-top-15">
-
-                                            <input type="submit" value="Submit" class="btn btn-light from-top-15">
-                                        </form>
-                                    </div>
+                                            <!-- Currency Exchange -->
+                                            <div class="col dashboard-detail-item from-top-25">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        currency_exchange
+                                                        </span>&nbsp; Currency Exchange
+                                                </p>
+                                                <hr>
+                                                <div class=>
+                                                    <form class="alert">
+                                                        <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
+                                                        <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
+                                                        <input type="submit" value="Calculate" class="btn btn-porpule color-white from-top-15" id="cut_to_ir_calculate"j>
+                                                    </form>
+                                                    <div class="flex-between alert">
+                                                        <div>Cut price today:</div>
+                                                        <div>{% if cut_per_ir %}$ {{cut_per_ir}}{% else %}Not define{% endif %}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                    
                             </div>
                         </div>
                   
@@ -504,6 +579,7 @@
                                                             notifications
                                                             </span>{{notification.title}}</h6 class="font-bold">
                                                         <p>{{notification.caption}}</p>
+                                                        <small><i>{{notification.created_at}}</i></small>
                                                 </div>
                                             {% endfor %}
                                             <a href="{% url 'seen_notifications' %}">Seen</a>

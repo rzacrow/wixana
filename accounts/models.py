@@ -30,8 +30,8 @@ class User(AbstractUser):
 
 class Wallet(models.Model):
     player = models.OneToOneField(User, on_delete=models.CASCADE)
-    card_number = models.CharField(max_length=16, blank=False, null=False)
-    IR = models.CharField(max_length=24, blank=True, null=True)
+    card_number = models.CharField(max_length=16, blank=True, null=True, unique=True)
+    IR = models.CharField(max_length=24, blank=True, null=True, unique=True)
     card_full_name = models.CharField(max_length=128, blank=False, null=False)
     amount = models.IntegerField(default=0)
 
@@ -115,3 +115,27 @@ class Notifications(models.Model):
     caption = models.CharField(max_length=255, blank=False, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=1, choices=NOTIF_CHOICES, default='U')
+
+
+class Transaction(models.Model):
+    TRANSACTION_CHOICES = (
+        ('PAID', 'Paid'),
+        ('ACTIVE', 'Active'),
+    )
+
+    CURRENCY_CHOICES = (
+        ('CUT', 'Cut'),
+        ('IR', 'IR'),
+    )
+
+    requester = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=6, choices=TRANSACTION_CHOICES, default='ACTIVE')
+    created = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    caption = models.CharField(max_length=255, blank=True, null=True)
+    paid_date = models.DateTimeField(blank=True, null=True)
+    amount = models.IntegerField(default=0)
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='CUT')
+
+    def __str__(self) -> str:
+        return str(self.id)
+    

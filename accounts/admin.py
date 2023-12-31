@@ -132,18 +132,20 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
             try:
                 get_wallet = Wallet.objects.get(player__username=obj.username)
             except:
-                Wallet.objects.create(player=obj, card_number='---', IR='---', card_full_name='---')
-
+                Wallet.objects.create(player=obj, card_full_name='---')
+        if 'user_type' in form.changed_data:
+            Notifications.objects.create(send_to=obj, title="Change User Permission", caption=f"your profile permission changed to the '{obj.user_type}' level by Owner")
         super().save_model(request, obj, form, change)
 
 
-class TeamDetailInline(StackedInline):
+class TeamDetailInline(TabularInline):
     model = TeamDetail
     extra = 1
     
 @admin.register(Team)
 class TeamAdmin(ModelAdmin):
     list_display = ['name']
+
     inlines = [
         TeamDetailInline
     ]

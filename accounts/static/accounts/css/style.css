@@ -220,6 +220,13 @@ a:hover, .nav-link:hover{
 .btn-search{
     border-radius: 50%; border: none; background-color: #4100f3; padding: 15px; color: white; font-weight: bold; font-size: 25px;
 }
+.btn-porpule{
+    background-image: linear-gradient(to right, #b40021, #6e0063); box-shadow: 2px 2px 8px 3px #00000017; transition: 0.3s;
+}
+.btn-porpule:hover{
+    transition: 0.3s;background-image: none; background-color: #b10320; box-shadow: none;
+}
+
 .limit-height-100{
     max-height: 180px;
 }
@@ -407,6 +414,21 @@ footer{
     backdrop-filter: blur(15px);
     margin-left: 15px;
     padding: 15px;
+    max-height: 470px !important;
+    overflow-y: scroll;
+}
+#user-detail{
+    max-height: 700px !important; min-height: 550px !important;
+}
+/* Hide scrollbar for Chrome, Safari and Opera */
+.dashboard-detail-item::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.dashboard-detail-item{
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 
@@ -442,6 +464,9 @@ select{
 .btn-link{
     border-right: 3px dashed #df0e9a; border-radius: 0; transition: 0.4s;
 }
+.btn-light-important{
+    background-color: #f8f8f8 !important;
+}
 .btn-link:hover{
     transition: 0.4s;
 }
@@ -469,7 +494,9 @@ select{
 .border-less{
     border: none;
 }
-
+.bank-card{
+    border: 1px solid #c1c1c1; box-shadow: 2px 2px 8px 2px #211017; border-radius: 12px; padding: 15px; margin-top: 15px;
+}
 
 
 

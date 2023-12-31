@@ -3,7 +3,8 @@ from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR,
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
-from accounts.models import Wallet
+from accounts.models import Wallet, Transaction, Notifications
+from django.utils import timezone
 
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -26,6 +27,36 @@ class GuildInline(StackedInline):
         obj.total -= obj.refunds
         obj.save()
         super().save_model(request, obj, form, change)
+
+@admin.register(Transaction)
+class TransactionAdmin(ModelAdmin):
+    list_display = ['requester', 'status', 'created', 'currency', 'amount']
+    readonly_fields = ['requester', 'amount', 'currency', 'created']
+
+    fieldsets = [(
+            "",
+            {
+                'fields' : [('requester', 'created'), ('currency', 'amount'), ('status', 'caption'), 'paid_date']
+            }
+        )
+    ]
+
+    ordering = ['status', '-created']
+    search_fields = ["id"]
+    search_help_text = ["Search in id"]
+
+
+    list_filter_submit = True
+    list_filter = ['status', 'created']
+
+    def save_model(self, request, obj, form, change):
+        if 'status' in form.changed_data:
+            Notifications.objects.create(send_to=obj.requester, title="Payment status changed", caption=f"Your payment request was changed to {obj.status} with code {obj.id}. This may take some time")
+            if 'paid_date' not in form.changed_data:
+                obj.paid_date = timezone.now()
+                obj.save()
+        super().save_model(request, obj, form, change)
+
 
 class CutDistributaionInline(StackedInline):
     model = CutDistributaion
