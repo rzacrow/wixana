@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
@@ -8,12 +8,14 @@ from unfold.forms import UserCreationForm
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
+
 # Register your models here.
 from django.forms.models import BaseInlineFormSet
 
 
 admin.site.unregister(Group)
-
 @admin.register(Realm)
 class Realm(ModelAdmin):
     # Preprocess content of readonly fields before render
@@ -59,12 +61,32 @@ class AltAdmin(ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+
+
+def get_user_permission(user):
+    if user.is_superuser:
+        return Permission.objects.all()
+    return user.user_permissions.all() | Permission.objects.filter(group__user=user)
+
+def add_user_permission():
+    admin_perm = Permission.objects.exclude(content_type__app_label='accounts', codename='add_user')
+    admin_perm = admin_perm.exclude(content_type__app_label='accounts', codename='change_user')
+    admin_perm = admin_perm.exclude(content_type__app_label='accounts', codename='delete_user')
+
+    admin_perm = admin_perm.exclude(content_type=ContentType.objects.get(model='session'))
+    return admin_perm
+
+
 @admin.register(um)
 class UserAdmin(BaseUserAdmin, ModelAdmin):
     add_form = UserCreationForm
 
     def changeform_view(self, request, obj, form, change):
         user = um.objects.filter(id=obj).first()
+
+        perm = user.has_perm('accounts.change_user')
+        if not perm:
+            raise PermissionDenied()
         if user:
             if user.user_type != 'U':
                 self.inlines = [
@@ -87,7 +109,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         (
             "User info",
             {
-                'fields' : [('username', 'user_type'), 'avatar', ('email', 'discord_id'), ('last_login', 'date_joined')]
+                'fields' : [('username', 'user_type'), 'avatar', ('email', 'discord_id'), ('last_login', 'date_joined'), ]
             }
         )
     ]
@@ -134,6 +156,21 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
             except:
                 Wallet.objects.create(player=obj, card_full_name='---')
         if 'user_type' in form.changed_data:
+            if obj.user_type == 'A':
+                obj.is_staff = True
+                admin_perm = add_user_permission()
+                print(admin_perm)
+                obj.user_permissions.set(admin_perm)
+                obj.save()
+            elif obj.user_type in ['B', 'U']:
+                obj.is_staff = False
+                obj.user_permissions.clear()
+                obj.save()
+            else:
+                if obj.is_superuser != True:
+                    raise PermissionError()
+
+
             Notifications.objects.create(send_to=obj, title="Change User Permission", caption=f"your profile permission changed to the '{obj.user_type}' level by Owner")
         super().save_model(request, obj, form, change)
 

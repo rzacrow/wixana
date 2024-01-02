@@ -1,8 +1,9 @@
-from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction
+from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications
 from gamesplayed.models import Attendance, CutInIR, AttendanceDetail
 from .forms import UpdateProfileForm, WalletForm
 from gamesplayed.models import CutInIR
-
+from django.db.models import Sum
+from django.utils import timezone
 
 
 def get_profile(pk) -> str:
@@ -28,10 +29,14 @@ def get_team(pk):
         members = TeamDetail.objects.filter(team=team_detail.team)
         is_leader_team = None
         new_requests = None
+        request_count = None
         if team_detail.team_role == 'Leader':
             new_requests = TeamRequest.objects.filter(team=team_detail.team, status='Awaiting')
+            request_count = TeamRequest.objects.filter(team=team_detail.team, status='Awaiting').count()
+            if request_count < 1:
+                request_count = None
             is_leader_team = True
-        return {'detail': team_detail.team, 'members': members, 'is_leader_team' : is_leader_team, 'new_requests' : new_requests}
+        return {'detail': team_detail.team, 'members': members, 'is_leader_team' : is_leader_team, 'new_requests' : new_requests, 'request_count': request_count}
     return None
 
 def get_matches(pk):
@@ -51,8 +56,25 @@ def wallet_report(pk):
     user = User.objects.get(id=pk)
     wallet = Wallet.objects.get_or_create(player=user)
     wallet = wallet[0]
+
+    #wallet balance
     amount = wallet.amount
-    return {'amount' : amount}
+
+    todays_income = 0
+    tomonth_income = 0
+    to_month_attendance = AttendanceDetail.objects.filter(attendane__paid_status=True, player=user, attendane__date_time__month=timezone.datetime.today().month)
+    to_day_attendance = AttendanceDetail.objects.filter(attendane__paid_status=True, player=user, attendane__date_time__day=timezone.datetime.today().day)
+    for td in to_day_attendance:
+        print(td.cut)
+    if to_day_attendance:
+        todays_income = to_day_attendance.aggregate(Sum('cut', default=0))['cut__sum']
+
+
+    if to_month_attendance:
+        tomonth_income = to_month_attendance.aggregate(Sum('cut', default=0))['cut__sum']
+    
+    
+    return {'amount' : amount, 'todays_income' : todays_income, 'tomonth_income' : tomonth_income}
 
 
 def cut_per_ir():
@@ -63,3 +85,12 @@ def transactions(pk):
     user = User.objects.get(id=pk)
     user_transaction = Transaction.objects.filter(requester=user).order_by('-created')[:10]
     return user_transaction
+
+def unseen_notif_badge(pk):
+    user = User.objects.get(id=pk)
+    count =  Notifications.objects.filter(send_to=user, status='U').count()
+    if count > 0:
+        return count
+    else:
+        return None
+

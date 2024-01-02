@@ -116,10 +116,10 @@ class SignupDiscord(View):
                             get_user.avatar_hash = avatar_hash
                             get_user.save()
                             login(request, get_user, backend=settings.AUTHENTICATION_BACKENDS[0])
-                            messages.add_message(request, messages.ERROR, message=f"Welcome back {user['username']}")
+                            messages.add_message(request, messages.SUCCESS, message=f"Welcome back {user['username']}")
                             return redirect('dashboard')
                         else:
-                            messages.add_message(request, messages.SUCCESS, "This username is reserved. You can't connect to it with Discord")
+                            messages.add_message(request, messages.ERROR, "This username is reserved. You can't connect to it with Discord")
                             return redirect('login')
                     
                     #if email exist
@@ -133,13 +133,13 @@ class SignupDiscord(View):
                                 get_user.avatar_hash = avatar_hash
                                 get_user.save()
                                 login(request, get_user, backend=settings.AUTHENTICATION_BACKENDS[0])
-                                messages.add_message(request, messages.ERROR, message=f"Welcome back {user['username']}")
+                                messages.add_message(request, messages.SUCCESS, message=f"Welcome back {user['username']}")
                                 return redirect('dashboard')
                             else:
-                                messages.add_message(request, messages.SUCCESS, "This email is reserved. You can't connect to it with Discord")
+                                messages.add_message(request, messages.ERROR, "This email is reserved. You can't connect to it with Discord")
                                 return redirect('login')
                         else:
-                                messages.add_message(request, messages.SUCCESS, "This email is reserved. You can't connect to it with Discord")
+                                messages.add_message(request, messages.ERROR, "This email is reserved. You can't connect to it with Discord")
                                 return redirect('login')            
                             
 
@@ -220,7 +220,7 @@ class Dashboard(View):
 
             #A flag to identify the user level
             is_superuser = None
-
+            is_user = None
             if altname and realm:
                 if (altname == '') or (altname == None) or (int(realm) == 0):
                     messages.add_message(request, messages.ERROR, 'You must fill all required fields')
@@ -240,7 +240,6 @@ class Dashboard(View):
                     user.user_type = 'O'
                     user.save()
                     return redirect('dashboard')
-                
             if user.user_type != 'U':
                 context['alts'] = booster_dashboard.get_alts(pk=user.id)
                 context['realms'] = booster_dashboard.get_realms()
@@ -251,7 +250,11 @@ class Dashboard(View):
                 context['wallet_report'] = booster_dashboard.wallet_report(pk=user.id)
                 context['cut_per_ir'] = booster_dashboard.cut_per_ir()
                 context['transactions'] = booster_dashboard.transactions(pk=user.id)
-                
+                context['unseen_notif_count'] = booster_dashboard.unseen_notif_badge(pk=user.id)
+            else:
+                is_user = True
+                context['is_user'] = is_user
+
             context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U")
 
             
@@ -353,8 +356,12 @@ class TeamDetailLink(View):
         user_requested = request.user
         if user_requested.user_type != 'U':
             team = Team.objects.filter(id=team_pk).first()
-            TeamRequest.objects.create(player=user_requested, team=team)
-            messages.add_message(request, messages.SUCCESS, 'Your request to join the team has been sent')
+            is_requesetd_before = TeamRequest.objects.filter(player=user_requested, team=team, status='Awaiting')
+            if not is_requesetd_before:
+                TeamRequest.objects.create(player=user_requested, team=team)
+                messages.add_message(request, messages.SUCCESS, 'Your request to join the team has been sent')
+            else:
+                messages.add_message(request, messages.ERROR, 'You have already sent a request to this team')
             return redirect('dashboard')
         else:
             messages.add_message(request, messages.ERROR, 'You are not allowed to join the team')
@@ -373,21 +380,25 @@ class JoinTeamResponse(View):
             if not TeamDetail.objects.filter(player=player):
                 TeamDetail.objects.create(team=team, player=player)
                 Notifications.objects.create(send_to=player, title="Join Team", caption=f"You are now a member of {team.name}")
-                messages.add_message(request, messages.SUCCESS, message=f"User {player.username} is now a member of your team")
+                messages.add_message(request, messages.SUCCESS, message=f"User {player.username} joined to your team")
             else:
                 Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} accepted, but you are already have a team")
                 messages.add_message(request, messages.WARNING, message=f"User {player.username} already has a team")
             
-            rq = TeamRequest.objects.get(team=team, player=player)
+            rq = TeamRequest.objects.filter(team=team, player=player, status="Awaiting").first()
             rq.status = "Verified"
             rq.save()
+            del rq
             return redirect('dashboard')
         else:
                 Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} rejected.")
                 messages.add_message(request, messages.WARNING, message=f"User {player.username} rejected!")
-                rq = TeamRequest.objects.get(team=team, player=player)
+                rq = TeamRequest.objects.filter(team=team, player=player, status="Awaiting").first()
                 rq.status = "Rejected"
                 rq.save()
+                del rq
+
+                
                 return redirect('dashboard')
         
 class SeenNotif(View):
@@ -397,6 +408,7 @@ class SeenNotif(View):
             for nf in notif:
                 nf.status = 'S'
                 nf.save()
+                nf.delete()
             
         return redirect('dashboard')
 
@@ -447,6 +459,9 @@ class AskingMoney(View):
                         else:        
                             Transaction.objects.create(requester=user, amount=amount, currency=currency)
                             messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
+                        admins = User.objects.filter(user_type__in=['A', 'O'])
+                        for admin in admins:
+                            Notifications.objects.create(send_to=admin, title="Payment reqeust", caption=f"You have a new payment request from {request.user.username}")
                     else:
                         messages.add_message(request, messages.WARNING, 'Payment request in not valid')
 

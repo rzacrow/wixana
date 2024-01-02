@@ -2,7 +2,9 @@
 <div class="container">
     <div class="row">
         <div class="col">
-                <div class="d-flex align-items-start">
+                <div class="d-flex align-items-start column-mobile">
+
+                    <!-- Side bar -->
                     <div class="nav flex-column nav-pills me-3 nav-l-style" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                         <button class="nav-link color-red">
                             <div class="flex-row center-icon-text">
@@ -17,29 +19,44 @@
                                 account_circle
                             </span>&nbsp;Account
                         </button>
-                      
-                        <button class="nav-link center-icon-text color-white none-hover" id="v-pills-teams-tab" data-bs-toggle="pill" data-bs-target="#v-pills-teams" type="button" role="tab" aria-controls="v-pills-teams" aria-selected="false">
+
+                        {% if not is_user %}
+                        <button class="nav-link center-icon-text color-white none-hover position-relative" id="v-pills-teams-tab" data-bs-toggle="pill" data-bs-target="#v-pills-teams" type="button" role="tab" aria-controls="v-pills-teams" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 groups
                             </span>&nbsp;Team
+                            {% if team.is_leader_team %}
+                                {% if team.request_count%}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{team.request_count}}
+                                        <span class="visually-hidden">unread messages</span>
+                                    </span>
+                                {% endif %}
+                            {% endif %}
                         </button>
 
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-recent-match-tab" data-bs-toggle="pill" data-bs-target="#pills-recent-match" type="button" role="tab" aria-controls="pills-recent-match" aria-selected="false">
+                        <button class="nav-link center-icon-text color-white none-hover" id="pills-recent-match-tab" data-bs-toggle="pill" data-bs-target="#pills-recent-match" type="button" role="tab" aria-controls="pills-recent-match" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 joystick
                                 </span>&nbsp;Recent Matches
                         </button>
 
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-wallet-tab" data-bs-toggle="pill" data-bs-target="#pills-wallet" type="button" role="tab" aria-controls="pills-wallet" aria-selected="false">
+                        <button class="nav-link center-icon-text color-white none-hover" id="pills-wallet-tab" data-bs-toggle="pill" data-bs-target="#pills-wallet" type="button" role="tab" aria-controls="pills-wallet" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 account_balance_wallet
                                 </span>&nbsp;Wallet
                         </button>
-
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-notifications-tab" data-bs-toggle="pill" data-bs-target="#pills-notifications" type="button" role="tab" aria-controls="pills-notifications" aria-selected="false">
+                        {% endif %}
+                        <button class="nav-link center-icon-text color-white none-hover position-relative" id="pills-notifications-tab" data-bs-toggle="pill" data-bs-target="#pills-notifications" type="button" role="tab" aria-controls="pills-notifications" aria-selected="false">
                             <span class="material-symbols-outlined">
                                 notifications_active
                             </span>&nbsp;Notifications
+                            {% if unseen_notif_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{unseen_notif_count}}
+                                <span class="visually-hidden">unread messages</span>
+                              </span>
+                            {% endif %}
                         </button>
 
                         <a href="{%url 'logout' %}">
@@ -60,13 +77,13 @@
 
 
 
-
+                    <!-- Content -->
                     <div class="tab-content" id="v-pills-tabContent">
                         <!-- Users Tab -->
                         <div class="tab-pane fade show active dashboard-detail padding-from-side" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
                             <div class="row">
-                                <div class="flex-column">
-                                            <div class="col dashboard-detail-item" id="user-detail">                                        
+                                <div class="col">
+                                            <div class=" dashboard-detail-item" id="user-detail">                                        
                                                 <div class="content">
 
                                                         <div class="row padding-25">
@@ -99,7 +116,8 @@
                                                         </div>
                                                 </div>
                                             </div>
-
+                                        
+                                        {% if not is_user %}
                                         <div class="col from-top-25 dashboard-detail-item">    
                                             <div class="content">
 
@@ -162,68 +180,69 @@
                                                 </div>
                                             </div>
                                         </div>
-
+                                        {% endif %}
 
                                 </div>
                             </div>
                         </div>
 
-
+                        {% if not is_user %}
                         <!-- Teams -->
                         <div class="tab-pane fade dashboard-detail" id="v-pills-teams" role="tabpanel" aria-labelledby="v-pills-teams-tab" tabindex="0">
                             <div class="row">
                                     {% if team %}
-                                        <div class="col dashboard-detail-item">
-                                            <p class="center-icon-text">
-                                                <span class="material-symbols-outlined">
-                                                    group
-                                                    </span>&nbsp;{{team.detail.name}}
-                                            </p>
+                                        <div class="col">
+                                            <div class="dashboard-detail-item">
+                                                <p class="center-icon-text">
+                                                    <span class="material-symbols-outlined">
+                                                        group
+                                                        </span>&nbsp;{{team.detail.name}}
+                                                </p>
 
-                                            <div class="content">
-                                                <div class="row">
+                                                <div class="content">
+                                                    <div class="row">
 
-                                                    <div class="col-lg-3"></div>
+                                                        <div class="col-lg-3 dis-none-mobile"></div>
 
-                                                    <div class="col-lg-6 from-top-25">
-                                                        <table class="table">
-                                                            <thead>
-                                                                <th class="bg-transparent color-white-important">user</th>
-                                                                <th class="bg-transparent color-white-important">Team Role</th>
-                                                            </thead>
-                                                            {% for member in team.members%}
-                                                                <tr>
-                                                                    <td class="bg-transparent color-white-important">{{member.player.username}}</td>
-                                                                    <td class="bg-transparent color-white-important">{{member.team_role}}</td>
-                                                                </tr>
-                                                            {% endfor %}
-                                                        </table>
-                                                        <br>
-                                                        <div class="flex-between flex-column">
-                                                            
-                                                            <div class="center-icon-text from-top-25">
-                                                                <span class="material-symbols-outlined">
-                                                                    link
-                                                                    </span>&nbsp;Address: &nbsp;<span class="badge bg-danger">{{team.detail.team_url}}</span>
+                                                        <div class="col-lg-6 from-top-25">
+                                                            <table class="table">
+                                                                <thead>
+                                                                    <th class="bg-transparent color-white-important">user</th>
+                                                                    <th class="bg-transparent color-white-important">Team Role</th>
+                                                                </thead>
+                                                                {% for member in team.members%}
+                                                                    <tr>
+                                                                        <td class="bg-transparent color-white-important">{{member.player.username}}</td>
+                                                                        <td class="bg-transparent color-white-important">{{member.team_role}}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </table>
+                                                            <br>
+                                                            <div class="flex-between flex-column">
+                                                                
+                                                                <div class="center-icon-text from-top-25">
+                                                                    <span class="material-symbols-outlined">
+                                                                        link
+                                                                        </span>&nbsp;Address: &nbsp;<span class="badge bg-danger">{{team.detail.team_url}}</span>
+                                                                </div>
+
+                                                                <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-light center-icon-text color-purpole from-top-15">
+                                                                    <span class="material-symbols-outlined">
+                                                                        door_back
+                                                                        </span>&nbsp;Left the team
+                                                                </a>
                                                             </div>
-
-                                                            <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-light center-icon-text color-purpole from-top-15">
-                                                                <span class="material-symbols-outlined">
-                                                                    door_back
-                                                                    </span>&nbsp;Left the team
-                                                            </a>
+                                                            <br>
                                                         </div>
-                                                        <br>
-                                                    </div>
 
-                                                    <div class="col-lg-3"></div>
+                                                        <div class="col-lg-3 dis-none-mobile"></div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
                                     
                                             {% if team.is_leader_team %}
-                                                <div class="flex-column dashboard-detail-item from-top-25">
-                                                        <div class="col">
+                                                
+                                                        <div class="dashboard-detail-item from-top-25">
                                                             <p class="center-icon-text">
                                                                 <span class="material-symbols-outlined">
                                                                     group_add
@@ -279,9 +298,8 @@
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                </div>
                                             {% endif %}
-
+                                        </div>
                                     {% else %}
                                             <div class="col dashboard-detail-item from-top-25-mobile">
                                                 <p class="center-icon-text">
@@ -341,8 +359,9 @@
                   
                         <!-- Recent Match settings -->
                         <div class="tab-pane fade dashboard-detail" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
-                            <div class="row">
-                                        <div class="col dashboard-detail-item from-top-25-mobile">
+                            <div class="row ">
+                                <div class="col">
+                                        <div class="dashboard-detail-item from-top-25-mobile">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
                                                     stadia_controller
@@ -374,7 +393,7 @@
                                         </div>
 
 
-                                        <div class="col dashboard-detail-item from-top-25-mobile">
+                                        <div class="dashboard-detail-item from-top-25">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
                                                     history
@@ -404,6 +423,7 @@
                                                 {% endif %}
                                             </div>
                                         </div> 
+                                </div>
                             </div>
                         </div>
                   
@@ -413,153 +433,161 @@
                         <div class="tab-pane fade dashboard-detail" id="pills-wallet" role="tabpanel" aria-labelledby="pills-wallet-tab" tabindex="0">
                             <div class="row">
                                     <!-- Payment Request -->
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                add_card
-                                                </span>&nbsp;Payment request
-                                        </p>
-                                        <hr>
+                                    <div class="col">
 
-                                        <div class="content">
-                                            <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
-                                                {% csrf_token %}
-                                                <label class="form-label">Amount</label>
-                                                <input type="number" placeholder="amount in cut..." name="asking_money_amount">
+                                            <div class="row">
+                                                <div class="col-md col-sm-12 dashboard-detail-item">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            add_card
+                                                            </span>&nbsp;Payment request
+                                                    </p>
+                                                    <hr>
 
-                                                <div class="mb-3 from-top-15">
-                                                    <label for="asking_money_type" class="form-label">Payment method</label>
-                                                    <select name="asking_money_type" id="asking_money_type" class="form-select">
-                                                        <option value="CUT" selected>Cut</option>
-                                                        <option value="IR">IR</option>
-                                                    </select>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <input type="submit" value="Send" class="btn btn-porpule color-white">
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <!-- Financial Reports -->
-                                    <div class="col dashboard-detail-item from-top-25-mobile">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                query_stats
-                                                </span>&nbsp;Report
-                                        </p>
-                                        <hr>
-                                        <div class="content">
-                                            {% if wallet_report %}
-                                                <div class="flex-between alert alert-warning">
-                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                        monetization_on
-                                                        </span>&nbsp;Wallet Balance:</div>
-                                                    <div>$ {{wallet_report.amount}}</div>
-                                                </div>
-
-                                                <div class="flex-between alert">
-                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                        looks_one
-                                                        </span>&nbsp;Today's Income:</div>
-                                                    <div>$ {{wallet_report.amount}}</div>
-                                                </div>
-
-                                                <div class="flex-between alert">
-                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                        calendar_month
-                                                        </span>&nbsp;Income this month:</div>
-                                                    <div>$ {{wallet_report.amount}}</div>
-                                                </div>
-                                            {% else %}
-                                                <p class="min-height-200 center-r-c">there aren't any reports</p>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-
-
-
-                                    <!-- Transaction -->
-                                    <div class="flex-column"></div>
-                                            <div class="col dashboard-detail-item from-top-25">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        history
-                                                        </span>&nbsp;Transaction History
-                                                </p>
-                                                
-                                                {% if transactions %}
-                                                    <table class="table table-warning">
-                                                        <thead>
-                                                            <th class="">Status</th>
-                                                            <th class="">Date of request</th>
-                                                            <th class="">details</th>
-                                                            <th class="">Paid date</th>
-                                                            <th class="">Currency</th>
-                                                            <th class="">Amount</th>
-                                                        </thead>
-                                                        {% for ts in transactions %}
-                                                            <tr>
-                                                                <td class="">{{ts.status}}</td>
-                                                                <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
-                                                                <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
-                                                                <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
-                                                                <td class="">{{ts.currency}}</td>
-                                                                <td class="">$ {{ts.amount}}</td>
-                                                            </tr>
-                                                        {% endfor %}
-                                                    </table>
-                                                {% else %}
                                                     <div class="content">
-                                                        <p class="min-height-200 center-r-c">there aren't any transaction</p>
+                                                        <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
+                                                            {% csrf_token %}
+                                                            <label class="form-label">Amount</label>
+                                                            <input type="number" placeholder="amount in cut..." name="asking_money_amount">
+
+                                                            <div class="mb-3 from-top-15">
+                                                                <label for="asking_money_type" class="form-label">Payment method</label>
+                                                                <select name="asking_money_type" id="asking_money_type" class="form-select">
+                                                                    <option value="CUT" selected>Cut</option>
+                                                                    <option value="IR">IR</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <input type="submit" value="Send" class="btn btn-porpule color-white">
+                                                            </div>
+                                                        </form>
                                                     </div>
-                                                {% endif %}
-                                            </div> 
+                                                </div>
 
-                                            <div class="flex-column"></div>
+                                                <!-- Financial Reports -->
+                                                <div class="col-md col-sm-12 dashboard-detail-item from-top-25-mobile">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            query_stats
+                                                            </span>&nbsp;Report
+                                                    </p>
+                                                    <hr>
+                                                    <div class="content">
+                                                        {% if wallet_report %}
+                                                            <div class="flex-between alert alert-warning">
+                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                    monetization_on
+                                                                    </span>&nbsp;Wallet Balance:</div>
+                                                                <div>$ {{wallet_report.amount}}</div>
+                                                            </div>
 
-                                            <!-- Wallet Detail -->
-                                            <div class="col dashboard-detail-item from-top-25">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        wallet
-                                                        </span>&nbsp;Wallet Detail
-                                                </p>
-                                                
-                                                <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
-                                                    {% csrf_token %}
-                                                    <div class="bank-card">
-                                                        {{wallet.as_div}}
-                                                    </div>
-                                                    <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
-                                                </form>
-                                            </div>
+                                                            <div class="flex-between alert">
+                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                    looks_one
+                                                                    </span>&nbsp;Today's Income:</div>
+                                                                <div>$ {{wallet_report.todays_income}}</div>
+                                                            </div>
 
-
-                                            <!-- Currency Exchange -->
-                                            <div class="col dashboard-detail-item from-top-25">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        currency_exchange
-                                                        </span>&nbsp; Currency Exchange
-                                                </p>
-                                                <hr>
-                                                <div class=>
-                                                    <form class="alert">
-                                                        <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
-                                                        <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
-                                                        <input type="submit" value="Calculate" class="btn btn-porpule color-white from-top-15" id="cut_to_ir_calculate"j>
-                                                    </form>
-                                                    <div class="flex-between alert">
-                                                        <div>Cut price today:</div>
-                                                        <div>{% if cut_per_ir %}$ {{cut_per_ir}}{% else %}Not define{% endif %}</div>
+                                                            <div class="flex-between alert">
+                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                    calendar_month
+                                                                    </span>&nbsp;Income this month:</div>
+                                                                <div>$ {{wallet_report.tomonth_income}}</div>
+                                                            </div>
+                                                        {% else %}
+                                                            <p class="min-height-200 center-r-c">there aren't any reports</p>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </div>
-                                    
-                            </div>
-                        </div>
-                  
+
+                                        <!-- Transaction -->
+                                            <div class="row">
+                                                <div class="col dashboard-detail-item from-top-25">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            history
+                                                            </span>&nbsp;Transaction History
+                                                    </p>
+                                                    
+                                                    {% if transactions %}
+                                                        <div class="table-responsive">
+                                                            <table class="table table-warning">
+                                                                <thead>
+                                                                    <th class="">Status</th>
+                                                                    <th class="">Date of request</th>
+                                                                    <th class="">details</th>
+                                                                    <th class="">Paid date</th>
+                                                                    <th class="">Currency</th>
+                                                                    <th class="">Amount</th>
+                                                                </thead>
+                                                                {% for ts in transactions %}
+                                                                    <tr>
+                                                                        <td class="">{{ts.status}}</td>
+                                                                        <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
+                                                                        <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
+                                                                        <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
+                                                                        <td class="">{{ts.currency}}</td>
+                                                                        <td class="">$ {{ts.amount}}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                            </table>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="content">
+                                                            <p class="min-height-200 center-r-c">there aren't any transaction</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </div> 
+                                            </div>    
+
+
+                                            <div class="row">
+                                                <!-- Wallet Detail -->
+                                                <div class="col-lg col-md-12 dashboard-detail-item from-top-25">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            wallet
+                                                            </span>&nbsp;Wallet Detail
+                                                    </p>
+                                                    
+                                                    <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
+                                                        {% csrf_token %}
+                                                        <div class="bank-card">
+                                                            {{wallet.as_div}}
+                                                        </div>
+                                                        <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
+                                                    </form>
+                                                </div>
+
+
+                                                <!-- Currency Exchange -->
+                                                <div class="col-lg col-md-12 dashboard-detail-item from-top-25">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            currency_exchange
+                                                            </span>&nbsp; Currency Exchange
+                                                    </p>
+                                                    <hr>
+                                                    <div class=>
+                                                        <form class="alert">
+                                                            <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
+                                                            <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
+                                                            <input type="submit" value="Calculate" class="btn btn-porpule color-white from-top-15" id="cut_to_ir_calculate"j>
+                                                        </form>
+                                                        <div class="flex-between alert">
+                                                            <div>Cut price today:</div>
+                                                            <div>{% if cut_per_ir %}$ {{cut_per_ir}}{% else %}Not define{% endif %}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                            
+                                        </div>
+                    
+                                    </div>
+                                </div>
+                        {% endif %}
                         <!-- Notifications -->
                         <div class="tab-pane fade dashboard-detail" id="pills-notifications" role="tabpanel" aria-labelledby="pills-notifications-tab" tabindex="0">
                             <div class="row">
@@ -595,6 +623,7 @@
 
                     </div>
                 </div>
+
+            </div>
         </div>
-    </div>
 </div>

@@ -3,12 +3,13 @@ from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR,
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
-from accounts.models import Wallet, Transaction, Notifications
+from accounts.models import Wallet, Transaction, Notifications, Team, TeamDetail
 from django.utils import timezone
 
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.forms import UserCreationForm
+
 
 class GuildInline(StackedInline):
     model = Guild
@@ -76,8 +77,6 @@ class AttendanceDetailInline(TabularInline):
             ],
         }),
     )
-    
-
 
     
 @admin.register(Attendance)
@@ -117,6 +116,21 @@ class AttendanceAdmin(ModelAdmin):
             "widget": WysiwygWidget,
         }
     }
+    """def add_team_member()
+    actions = list()
+    teams = Team.objects.filter()
+    if teams:
+        for team in teams:
+            actions.append('add_team_to_attendance')
+            @admin.action(description=f"Add team {team.name} to selected attendance")
+            def add_team_to_attendance(self, request, queryset, team=team):
+                team_details = TeamDetail.objects.filter(team=team)
+                role = Role.objects.get(name="Booster")
+                for td in team_details:
+                    for query in queryset:
+                        AttendanceDetail.objects.create(attendane=query, player=td.player, role=role)"""
+
+
     def change_view(self, request, object_id, form_url="", extra_context=None):
         try:
             obj = Attendance.objects.get(id=object_id)
@@ -156,11 +170,15 @@ class AttendanceAdmin(ModelAdmin):
         finally:
             return super().change_view(request, object_id, form_url, extra_context)
 
+
+
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
             # hide MyInline in the add view
             if not isinstance(inline, (CutDistributaionInline,GuildInline, AttendanceDetailInline)) or obj is not None:
                 yield inline.get_formset(request, obj), inline
+
+
 
 
     def save_model(self, request, obj, form, change):
