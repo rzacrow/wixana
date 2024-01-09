@@ -12,7 +12,7 @@ from django.utils import timezone
 from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest
 from gamesplayed.models import CutInIR
 
 
@@ -228,22 +228,21 @@ class Dashboard(View):
             #A flag to identify the user level
             is_superuser = None
             is_user = None
+            remove_alt_request = None
             if altname and realm:
                 if (altname == '') or (altname == None) or (int(realm) == 0):
                     messages.add_message(request, messages.ERROR, 'You must fill all required fields')
                 else:
                     realm_obj = Realm.objects.get(id=realm)
-                    alts = Alt.objects.filter(realm=realm_obj, name=altname, player=request.user)
-                    if not alts:
-                        Alt.objects.create(realm=realm_obj, name=altname, player=request.user)
-                        messages.add_message(request, messages.SUCCESS, 'Alt added successfully, after admin approval, it will be placed in your profile')
-                    else:
-                        messages.add_message(request, messages.WARNING, 'Alt with this detail already exist')
+                    Alt.objects.create(realm=realm_obj, name=altname, player=request.user)
+                    messages.add_message(request, messages.SUCCESS, 'Alt added successfully, after admin approval, it will be placed in your profile')
 
             tab = request.GET.get('tab')
             if tab:
                 context['tab'] = tab
             if user.is_superuser:
+                remove_alt_request = RemoveAltRequest.objects.filter(status='Awaiting')
+                context['remove_alt_request'] = remove_alt_request
                 #change user type to Owner in first login
                 is_superuser = True
                 if user.user_type != 'O':
@@ -756,3 +755,44 @@ class PositionMemberTeam(View):
         else:
             messages.add_message(request, messages.ERROR, 'Request is not valid')
             return redirect(reverse('dashboard') + '?tab=team')
+        
+
+class RemoveAlts(View):
+    def get(self, request, pk):
+        admins = User.objects.filter(user_type='O')
+        alt = Alt.objects.filter(id=pk).first()
+        if alt.player == request.user:
+            for admin in admins:
+                RemoveAltRequest.objects.create(alt=alt, user=alt.player, status='Awaiting')
+                messages.add_message(request, messages.SUCCESS, 'Your request has been registered. After checking the admin, the result will be sent to you')
+                return redirect('dashboard')
+        else:
+            messages.add_message(request, messages.ERROR, 'Request is not valid')
+            return redirect('dashboard')
+        
+
+class RemoveAltsResponse(View):
+    def get(self, request, pk):
+        admins = User.objects.filter(user_type='O')
+        if request.user in admins:
+            try:
+                rq = RemoveAltRequest.objects.get(id=pk)
+                ans = request.GET['answer']
+                if ans == 'no':
+                    Notifications.objects.create(send_to=rq.user, title='Delete alt request', caption='Your request rejected by admin')
+                    rq.delete()
+                    messages.add_message(request, messages.SUCCESS, 'Changes saved successfully')
+                    return redirect(reverse('dashboard') + '?tab=notifications')
+                elif ans == 'yes':
+                    Notifications.objects.create(send_to=rq.user, title='Delete alt request', caption=f'{rq.alt.name} alt has been deleted!')
+                    Alt.objects.get(id=rq.alt.id).delete()
+                    rq.delete()
+                    messages.add_message(request, messages.SUCCESS, 'Changes saved successfully')
+                    return redirect(reverse('dashboard') + '?tab=notifications')             
+            except:
+                messages.add_message(request, messages.WARNING, 'Something went wrong!')
+                return redirect(reverse('dashboard') + '?tab=notifications')
+            
+        else:
+            messages.add_message(request, messages.ERROR, 'Your request is not valid')
+            return redirect(reverse('dashboard') + '?tab=notifications')

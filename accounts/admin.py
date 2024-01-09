@@ -41,7 +41,7 @@ class WalletInline(StackedInline):
     }
 
 
-class AltInline(StackedInline):
+class AltInline(TabularInline):
     model = Alt
     # Preprocess content of readonly fields before render
     readonly_preprocess_fields = {
@@ -98,16 +98,19 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         if request.user.user_type != 'O':
             raise PermissionDenied()
         
-        user = um.objects.get(id=obj)
-        if user:
-            if user.user_type != 'U':
-                self.inlines = [
-                    AltInline,
-                    WalletInline
-                ]
-            else:
-                self.inlines = [
-                ]
+        try:
+            user = um.objects.get(id=obj)
+            if user:
+                if user.user_type != 'U':
+                    self.inlines = [
+                        AltInline,
+                        WalletInline
+                    ]
+                else:
+                    self.inlines = [
+                    ]
+        except:
+            pass
 
         ONE_MONTH = 30 * 24 * 60 * 60
         expiry = getattr(settings, "KEEP_LOGGED_DURATION", ONE_MONTH)

@@ -76,8 +76,16 @@ class Alt(models.Model):
         return f"{self.player.username} | {self.name}"
 
 
+class RemoveAltRequest(models.Model):
+    REMOVE_ALT_REQUEST_STATUS = (
+        ('Accept','Accept'),
+        ('Awaiting','Awaiting'),
+        ('Reject','Reject'),
+    )
 
-
+    alt = models.ForeignKey(Alt, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=8, choices=REMOVE_ALT_REQUEST_STATUS)
 
 
 
@@ -171,3 +179,21 @@ class Transaction(models.Model):
     def __str__(self) -> str:
         return str(self.id)
     
+
+class Loan(models.Model):
+    LOAN_STAUTS = (
+        ('Pending','Pending'),
+        ('Accept','Accept'),
+        ('Reject','Reject'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    alt = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
+
+
+class Debt(models.Model):
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE)
+    debt_amount = models.IntegerField()

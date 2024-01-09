@@ -8,7 +8,7 @@
                         <button class="nav-link color-red">
                             <div class="flex-row center-icon-text">
                                 <img src="{% if user.avatar_hash %}../../{{user.avatar_hash}}{% elif user.avatar %}{{user.avatar.url}}{% else %}{% static '../media/profile/profile-icon.png' %}{%endif %}" class="image-profile shadow-lg"> &nbsp;
-                                <h6>{{user.username}}</h6>
+                                <h6>{% if user.nick_name %}{{user.nick_name}}{% else %}{{user.username}}{% endif %}</h6>
                             </div>
                         </button>
 
@@ -44,6 +44,12 @@
                             <span class="material-symbols-outlined">
                                 account_balance_wallet
                                 </span>&nbsp;Wallet
+                        </button>
+
+                        <button class="nav-link center-icon-text color-white none-hover {% if tab == 'loan'%}active{% endif %}" id="pills-loan-tab" data-bs-toggle="pill" data-bs-target="#pills-loan" type="button" role="tab" aria-controls="pills-loan" aria-selected="false" {% if is_user %}disabled{% endif %}>
+                            <span class="material-symbols-outlined">
+                                account_balance
+                            </span>&nbsp;Loan
                         </button>
                         {% endif %}
                         <button class="nav-link center-icon-text color-white none-hover position-relative {% if tab == 'notifications' %}active{% endif %}" id="pills-notifications-tab" data-bs-toggle="pill" data-bs-target="#pills-notifications" type="button" role="tab" aria-controls="pills-notifications" aria-selected="false">
@@ -134,8 +140,19 @@
                                                                     </p>
                                                                     {% if alts %}
                                                                         <table class="table">
+                                                                            <thead>
+                                                                                <th>Remove</th>
+                                                                                <th>Name</th>
+                                                                                <th>Realm</th>
+                                                                                <th>Status</th>
+                                                                            </thead>
                                                                         {% for alt in alts %}
                                                                             <tr>
+                                                                                <td class="bg-transparent color-white-important">
+                                                                                    <a href="{% url 'remove_alt' alt.id %}"><span class="material-symbols-outlined">
+                                                                                    delete
+                                                                                    </span></a>
+                                                                                </td>
                                                                                 <td class="bg-transparent color-white-important"># {{alt.name}}</td>
                                                                                 <td class="bg-transparent color-white-important">{{alt.realm.name}}</td>
                                                                                 <td class="bg-transparent color-white-important">
@@ -209,7 +226,7 @@
 
                                                             <div class="col-lg-6 from-top-25">
                                                                 <table class="table align-middle">
-                                                                    <thead class="table-warning">
+                                                                    <thead class="table-secondary">
                                                                         {% if team.is_leader_team %}<th>Options</th>{% endif %}
                                                                         <th>Members</th>
                                                                         <th>Team Role</th>
@@ -485,7 +502,7 @@
                         </div>
                   
                   
-                        <!-- Recent Match settings -->
+                        <!-- Attendance -->
                         <div class="tab-pane fade dashboard-detail" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
                             <div class="row ">
                                 <div class="col">
@@ -507,7 +524,7 @@
                                                         </thead>
                                                         {% for match in matches.active_cycle %}
                                                             <tr>
-                                                                <td class="bg-transparent color-white-important">{{match.attendane.date_time|date:"Y-m-d H:i:s" }}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.attendane.date_time|date:"Y-m-d H:i" }}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.cut}}</td>
@@ -525,7 +542,7 @@
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
                                                     history
-                                                    </span>&nbsp;Match History
+                                                    </span>&nbsp;History
                                             </p>
     
                                             <div class="content padding-15">
@@ -539,7 +556,7 @@
                                                         </thead>
                                                         {% for match in matches.closed_cycle %}
                                                             <tr>
-                                                                <td class="bg-transparent color-white-important">{{ match.attendane.date_time|date:"Y-m-d H:i:s" }}</td>
+                                                                <td class="bg-transparent color-white-important">{{ match.attendane.date_time|date:"Y-m-d H:i" }}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.cut}}</td>
@@ -653,7 +670,7 @@
                                                         
                                                         {% if transactions %}
                                                             <div class="table-responsive" style="overflow-x: auto !important;">
-                                                                <table class="table table-warning">
+                                                                <table class="table">
                                                                     <thead>
                                                                         <th class="">Status</th>
                                                                         <th class="">Date of request</th>
@@ -743,8 +760,70 @@
                     
                             </div>
                         </div>
-                        {% endif %}
 
+
+
+
+                        <!-- Loan -->
+                        <div class="tab-pane {% if tab == 'loan' %}show active{% endif %} fade dashboard-detail" id="pills-loan" role="tabpanel" aria-labelledby="pills-loan-tab" tabindex="0">
+                            <div class="row">
+                                    <div class="col">
+                                            <div class="dashboard-detail-item">
+                                                    <!-- Loan Application -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    account_balance
+                                                                </span>&nbsp;Get loan
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                            </div>
+
+
+
+
+                                            <div class="dashboard-detail-item from-top-25">
+                                                <!-- Debt -->
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                add_chart
+                                                            </span>&nbsp;Debt
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="dashboard-detail-item from-top-25">
+                                                <!-- History -->
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                real_estate_agent
+                                                            </span>&nbsp;Loans taken
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                    </div>
+                            </div>
+                        </div>
+
+
+
+
+
+
+
+
+
+                        {% endif %}
 
                         <!-- Notifications -->
                         <div class="tab-pane {% if tab == 'notifications' %}show active{% endif %} fade dashboard-detail" id="pills-notifications" role="tabpanel" aria-labelledby="pills-notifications-tab" tabindex="0">
@@ -765,6 +844,29 @@
                                                     <div class="row">
                                                         <div class="col-12">
                                                             <div class="content">
+
+                                                                <!-- Delete alt request -->
+                                                                {% if remove_alt_request %}
+                                                                {% for rar in remove_alt_request %}
+                                                                    <div class="alert alert-dark from-top-15">
+                                                                            <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
+                                                                                notifications
+                                                                                </span>Request to delete alt</h6 class="font-bold">
+                                                                            <div class="row">
+                                                                                <div class="col-sm-4"><p>{% if rar.user.nick_name %}{{ rar.user.nick_name }}{% else %}{{ rar.user.username }}{% endif %} wants to delete the {{rar.alt.name}} alt. Do you approve of this?</p></div>
+    
+                                                                                <div class="col-sm-8">
+                                                                                    <form class="flex-end">
+                                                                                        <a href="{% url 'delete_alt_response' rar.id %}?answer=no" class="btn btn-danger color-white-important">No</a>
+                                                                                        <a href="{% url 'delete_alt_response' rar.id %}?answer=yes" class="btn btn-primary color-white-important from-left-10">Yes, delete it</a>
+                                                                                    </form>
+                                                                                </div>
+                                                                            </div>
+                                                                    </div>
+                                                                {% endfor %}
+                                                                {% endif %}
+
+
                                                                 <!-- Invite Request -->
                                                                 {% if invite_request %}
                                                                 {% for i_r in invite_request %}
@@ -799,18 +901,15 @@
                                                                 {% endfor %}
                                                                 <a href="{% url 'seen_notifications' %}">Seen</a>
                                                                 {% else %}
-                                                                    <p class="min-height-200 min-width-100 center-r-c">There aren't new notifications</p>
+                                                                    <p class="min-height-200 min-width-100 center-r-c"></p>
                                                                 {% endif %}
                                                             </div>
                                                         </div>
                                                     </div>
                                             </div>
 
-
-
-
                                             <div class="dashboard-detail-item from-top-25">
-                                                <!-- Unread notifications -->
+                                                <!-- Notifications History -->
                                                 <div class="row">
                                                     <div class="col-12">
                                                         <p class="center-icon-text">

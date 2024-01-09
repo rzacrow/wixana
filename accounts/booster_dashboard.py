@@ -1,4 +1,4 @@
-from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember
+from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest
 from gamesplayed.models import Attendance, CutInIR, AttendanceDetail
 from .forms import UpdateProfileForm, WalletForm
 from gamesplayed.models import CutInIR
@@ -133,6 +133,8 @@ def unseen_notif_badge(pk):
     user = User.objects.get(id=pk)
     count =  Notifications.objects.filter(send_to=user, status='U').count()
     count += InviteMember.objects.filter(user=user).count()
+    if user.user_type == 'O':
+        count += RemoveAltRequest.objects.filter(status='Awaiting').count()
     if count > 0:
         return count
     else:

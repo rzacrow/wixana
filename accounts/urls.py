@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, WalletUpdateDetail
-from .views import InviteUser, CheckPassword, ResetPassword, RemoveTeamMember, AskingMoney, ForgetPassword, InviteUserResponse, PositionMemberTeam
+from .views import InviteUser, CheckPassword, ResetPassword, RemoveTeamMember, AskingMoney, ForgetPassword, InviteUserResponse, PositionMemberTeam, RemoveAlts, RemoveAltsResponse
 
 
 urlpatterns = [
@@ -23,6 +23,10 @@ urlpatterns = [
     path('dashboard/team/invite/<int:team_pk>/<int:user_pk>/', InviteUser.as_view(), name="invite_member"),
     path('dashboard/team/invite/<int:team_pk>/<int:user_pk>/response/<str:response>/', InviteUserResponse.as_view(), name="invite_member_response"),
     path('dashboard/team/role/<int:team_pk>/<int:user_pk>/', PositionMemberTeam.as_view(), name="position_team_member"),
+
+    #Remove Alts
+    path('dashboard/alts/remove/<int:pk>/', RemoveAlts.as_view(), name="remove_alt"),
+    path('dashboard/alts/remove/response/<int:pk>/', RemoveAltsResponse.as_view(), name="delete_alt_response"),
 
 
     #wallet url

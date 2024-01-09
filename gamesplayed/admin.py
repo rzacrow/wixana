@@ -36,12 +36,11 @@ class TransactionAdmin(ModelAdmin):
         return obj.created.strftime("%Y-%m-%d %H:%M")
     
     list_display = ['requester', 'status', 'created_show', 'currency', 'amount']
-    readonly_fields = ['requester', 'amount', 'currency', 'created']
-
+    readonly_fields = ['created_show']
     fieldsets = [(
-            "",
+            None,
             {
-                'fields' : [('requester', 'created'), ('currency', 'amount'), ('status', 'caption'), 'paid_date']
+                'fields' : [('requester', 'created_show'), ('currency', 'amount'), ('status', 'caption'), 'paid_date']
             }
         )
     ]

@@ -204,6 +204,12 @@ a:hover, .nav-link:hover{
 .drop-down-btn{
     background-color: transparent; border: none; color: white;
 }
+.top-left-rounded{
+    border-top-left-radius: 8px;
+}
+.top-right-rounded{
+    border-top-right-radius: 8px;
+}
 .dropdown-custom{
     position: relative;
 }
