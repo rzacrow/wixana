@@ -31,7 +31,11 @@ class GuildInline(StackedInline):
 
 @admin.register(Transaction)
 class TransactionAdmin(ModelAdmin):
-    list_display = ['requester', 'status', 'created', 'currency', 'amount']
+    @admin.display(description="Date Time")
+    def created_show(self, obj):
+        return obj.created.strftime("%Y-%m-%d %H:%M")
+    
+    list_display = ['requester', 'status', 'created_show', 'currency', 'amount']
     readonly_fields = ['requester', 'amount', 'currency', 'created']
 
     fieldsets = [(
@@ -84,7 +88,7 @@ class AttendanceAdmin(ModelAdmin):
 
     @admin.display(description="Date Created")
     def date_time_show(self, obj):
-        return obj.date_time.strftime("%Y-%m-%d %H:%M:%S")
+        return obj.date_time.strftime("%Y-%m-%d %H:%M")
 
     list_display = ["date_time_show", 'status', 'total_pot']
     list_filter = ['status', 'date_time']

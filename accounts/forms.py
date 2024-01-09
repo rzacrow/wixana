@@ -94,16 +94,24 @@ class LoginForm(forms.Form):
 class UpdateProfileForm(forms.Form):
     avatar = forms.ImageField(allow_empty_file=True, required=False)
     username = forms.CharField(max_length=128, required=True, help_text=None)
+    nick_name = forms.CharField(max_length=128, required=False)
     email = forms.EmailField(max_length=128, required=True)
     national_code = forms.CharField(max_length=10, required=False)
+    phone = forms.CharField(max_length=11, required=False)
+
 
     def clean(self):
         cleaned_data = super().clean()
         national_code = cleaned_data.get('national_code')
+        phone = cleaned_data.get('phone')
 
         if len(national_code) != 0: 
             if (len(national_code) != 10) or (not national_code.isdigit()):
                 raise ValidationError('National code must be 10 digits')
+        
+        if len(phone) != 0:
+            if (len(phone) != 11) or (not phone.isdigit()):
+                raise ValidationError('Phone number must be 11 digits')
 
 class CreateTeamForm(ModelForm):
     class Meta:

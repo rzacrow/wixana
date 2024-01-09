@@ -15,15 +15,27 @@ class User(AbstractUser):
         ('U', 'User')
     )
 
+    AUTHENTICATION_LEVEL = (
+        ('White', 'White'),
+        ('Yellow', 'Yellow'),
+        ('Green', 'Green'),
+    )
+
     avatar = models.ImageField(upload_to=generate_unique_path, blank=True, null=True)
     email = models.CharField(unique=True, max_length=256, blank=False, null=False)
     user_type = models.CharField(max_length=1, choices=USER_TYPE_CHOICES, blank=False, null=False, default="U")
     discord_id = models.CharField(max_length=256, blank=True, null=True)
     avatar_hash = models.CharField(max_length=256, blank=True, null=True)
     national_code = models.CharField(max_length=10, blank=True, null=True, unique=True)
+    phone = models.CharField(max_length=11, unique=True, blank=True, null=True)
+    nick_name = models.CharField(max_length=128, blank=True, null=True)
+    authentication_level = models.CharField(max_length=6, choices=AUTHENTICATION_LEVEL, default='White')
     
     def __str__(self) -> str:
-        return self.username
+        if self.nick_name:
+            return self.nick_name
+        else:
+            return self.username
     
 
 

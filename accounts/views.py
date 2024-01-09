@@ -288,6 +288,9 @@ class Dashboard(View):
             username = data['username']
             email = data['email']
             national_code = data['national_code']
+            nick_name = data['nick_name']
+            phone = data['phone']
+
             try:
                 user.avatar = request.FILES['avatar']
             except:
@@ -317,6 +320,8 @@ class Dashboard(View):
             user.username = username
             user.email = email
             user.national_code = national_code
+            user.phone = phone
+            user.nick_name = nick_name
             user.save()
 
             messages.add_message(request, messages.SUCCESS, "Profile updated successfully")

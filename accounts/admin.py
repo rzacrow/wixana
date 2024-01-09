@@ -115,13 +115,17 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         return super().changeform_view(request, obj, form, change)
 
 
-
-    list_display = ['username', 'user_type', 'last_login']
+    @admin.display(description="Lost Login")
+    def lost_login_show(self, obj):
+        return obj.last_login.strftime("%Y-%m-%d %H:%M")
+    
+    list_display = ['nick_name', 'username', 'user_type', 'lost_login_show']
+    list_display_links = ['nick_name', 'username']
     fieldsets = [
         (
             "User info",
             {
-                'fields' : [('username', 'user_type'), 'avatar', ('email', 'discord_id'), ('last_login', 'date_joined'), ]
+                'fields' : [('username', 'user_type'), ('nick_name', 'phone'), 'national_code', 'avatar', ('email', 'discord_id'), ('last_login', 'date_joined'), ]
             }
         )
     ]
@@ -204,3 +208,15 @@ class TeamAdmin(ModelAdmin):
             leader = TeamDetail.objects.filter(team=obj).first()
             Team.objects.get(id=obj.id).delete()
             Notifications.objects.create(send_to=leader.player, title="Your team has been deleted by the admin")
+
+
+@admin.register(Wallet)
+class WalletAdmin(ModelAdmin):
+    @admin.display(description="Balance")
+    def balance_show(self, obj):
+        if obj.amount >= 1000:
+            return "{0} K".format(obj.amount // 1000)
+        return obj.amount
+    
+    list_display = ['player', 'card_number', 'card_full_name', 'balance_show']
+    readonly_fields = ['player']

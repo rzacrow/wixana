@@ -11,7 +11,7 @@ import math
 
 def get_profile(pk) -> str:
     profile = User.objects.filter(id=pk).first()
-    profile_form = UpdateProfileForm(initial={'username':profile.username, 'email':profile.email, 'national_code':profile.national_code})
+    profile_form = UpdateProfileForm(initial={'username':profile.username, 'email':profile.email, 'national_code':profile.national_code, 'phone': profile.phone, 'nick_name' : profile.nick_name})
 
     return profile_form
 
