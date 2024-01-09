@@ -147,13 +147,12 @@ class AttendanceAdmin(ModelAdmin):
             boosters = AttendanceDetail.objects.filter(attendane=obj)
             if boosters:
                 for booster in boosters:
-                    booster.multiplier = (((obj.boss_kill - booster.missing_boss) / obj.boss_kill) + booster.role.value)
+                    booster.multiplier = (((obj.boss_kill - booster.missing_boss) / obj.boss_kill) * booster.role.ratio)
                     booster.save()
 
 
                 sum_multiplier = boosters.aggregate(Sum('multiplier'))['multiplier__sum']
                 cut_per_booster = gd.booster // sum_multiplier
-                print(cut_per_booster)
                 for booster in boosters:
                     booster.cut = int(cut_per_booster * booster.multiplier)
                     booster.save()
@@ -175,7 +174,7 @@ class AttendanceAdmin(ModelAdmin):
     def get_formsets_with_inlines(self, request, obj=None):
         for inline in self.get_inline_instances(request, obj):
             # hide MyInline in the add view
-            if not isinstance(inline, (CutDistributaionInline,GuildInline, AttendanceDetailInline)) or obj is not None:
+            if not isinstance(inline, (CutDistributaionInline,GuildInline)) or obj is not None:
                 yield inline.get_formset(request, obj), inline
 
 
@@ -192,7 +191,6 @@ class AttendanceAdmin(ModelAdmin):
             gd.gold_collector = (int(2 * total)) // 100
             gd.guild_bank = (int(3 * total)) // 100
             gd.save()
-
         except:
             pass
 
@@ -213,16 +211,43 @@ class AttendanceAdmin(ModelAdmin):
                             wallet[0].save()
                     obj.paid_status = True
                     obj.save()
+                    super().save_model(request, obj, form, change)
 
-            super().save_model(request, obj, form, change)
+            else:
+                super().save_model(request, obj, form, change)
+
+                boosters = AttendanceDetail.objects.filter(attendane=obj)
+                if boosters:
+                    for booster in boosters:
+                        booster.multiplier = (((obj.boss_kill - booster.missing_boss) / obj.boss_kill) * booster.role.ratio)
+                        print(booster.player.username, booster.multiplier)
+                        booster.save()
+
+
+                    sum_multiplier = boosters.aggregate(Sum('multiplier'))['multiplier__sum']
+                    cut_per_booster = gd.booster // sum_multiplier
+                    for booster in boosters:
+                        booster.cut = int(cut_per_booster * booster.multiplier)
+                        booster.save()
+
 
 @admin.register(Role)
 class RoleAdmin(ModelAdmin):
-    list_display = ['name', 'value']
+    list_display = ['name', 'ratio']
 
 @admin.register(RunType)
 class RunTypeAdmin(ModelAdmin):
-    list_display = ['name', 'community', 'guild']
+    list_display = ['name', 'guild', 'community']
+    fieldsets = (
+        (None, {
+            "fields": (
+                'name',
+                'guild',
+                'community',
+            ),
+        }),
+    )
+    
 
 @admin.register(CutInIR)
 class CutInIR(ModelAdmin):

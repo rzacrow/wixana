@@ -36,12 +36,33 @@ for (radio of radioes){
     second_parent.classList.add('col-12');
 }
 
-window.onload = function(){
-    document.getElementById('cut_to_ir_calculate').onclick = function(e){
+function waitForLoad(id, callback){
+    var timer = setInterval(function(){
+        if(document.getElementById('btn-click-calc')){
+            clearInterval(timer);
+            callback();
+        }
+    }, 100);
+}
+
+waitForLoad("subm", function(){
+    document.getElementById("btn-click-calc").onclick = function()
+    {
         let cut_value = document.getElementById("currency_exchange").value;
         let cut_in_ir_price = document.getElementById("cut_in_ir_price").value;
         let cut_in_ir = cut_value * cut_in_ir_price;
-        alert(cut_value + " cut at the last price is equal to " + cut_in_ir + " IR");
-        return true;
+        document.getElementById('response-calculator').innerText = cut_value + 'K cut in IR: ' + cut_in_ir;
     }
- }
+});
+
+
+function btn_dropdown(id){
+    let ids = id;
+    console.log("dropdown-menu-" + ids);
+    let drop_down = document.getElementById("dropdown-menu-" + ids);
+    if (drop_down.style.display != 'block'){
+        drop_down.style.display = "block";
+    }else{
+        drop_down.style.display = "none";
+    }
+}

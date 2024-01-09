@@ -1,18 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.views.generic import View
 from django.contrib import messages
 from django.conf import settings
 import requests
 from django.contrib.auth import authenticate, login, logout
-import shutil
-import os
+import shutil, os, random
 from . import booster_dashboard
-
+from django.core.mail import send_mail
+from django.utils import timezone
 #forms
-from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember
 from gamesplayed.models import CutInIR
 
 
@@ -87,25 +87,32 @@ class SignupDiscord(View):
                     'authorization' : f"{user_token['token_type']} {user_token['access_token']}",
                 }
 
-                user = requests.get(url="https://discord.com/api/users/@me", headers=header)
-                user = user.json()
-
+                try:
+                    user = requests.get(url="https://discord.com/api/users/@me", headers=header)
+                    user = user.json()
+                except:
+                    messages.add_message(request, messages.WARNING, "Something went wrong!")
+                    return redirect('login')
+                
                 if user['verified'] == True:                    
                     #get user avatar with discord cdn
                     avatar_hash = None
 
                     if user['avatar']:
-                        r = requests.get(url=f"https://cdn.discordapp.com/avatars/{user['id']}/{user['avatar']}", stream=True)
-                        img_path = f"media/profile/discord/{user['id']}/"
-                        #make top directories
-                        os.makedirs(os.path.dirname(img_path), exist_ok=True)
+                        try:
+                            r = requests.get(url=f"https://cdn.discordapp.com/avatars/{user['id']}/{user['avatar']}", stream=True)
+                            img_path = f"media/profile/discord/{user['id']}/"
+                            #make top directories
+                            os.makedirs(os.path.dirname(img_path), exist_ok=True)
 
-                        #get image from request and copy into follow path with unique user_id/user_avatar_hash
-                        with open("{0}{1}.png".format(img_path, user['avatar']), 'wb') as f:
-                            shutil.copyfileobj(r.raw, f)
+                            #get image from request and copy into follow path with unique user_id/user_avatar_hash
+                            with open("{0}{1}.png".format(img_path, user['avatar']), 'wb') as f:
+                                shutil.copyfileobj(r.raw, f)
 
-                            #save path profile into db
-                            avatar_hash = "{0}{1}.png".format(img_path, user['avatar'])
+                                #save path profile into db
+                                avatar_hash = "{0}{1}.png".format(img_path, user['avatar'])
+                        except:
+                            messages.add_message(request, messages.WARNING, "There was a problem getting your profile picture from Discord")
 
                     #if username exist
                     if User.objects.filter(username=user['username']).exists():
@@ -233,6 +240,9 @@ class Dashboard(View):
                     else:
                         messages.add_message(request, messages.WARNING, 'Alt with this detail already exist')
 
+            tab = request.GET.get('tab')
+            if tab:
+                context['tab'] = tab
             if user.is_superuser:
                 #change user type to Owner in first login
                 is_superuser = True
@@ -240,6 +250,7 @@ class Dashboard(View):
                     user.user_type = 'O'
                     user.save()
                     return redirect('dashboard')
+                
             if user.user_type != 'U':
                 context['alts'] = booster_dashboard.get_alts(pk=user.id)
                 context['realms'] = booster_dashboard.get_realms()
@@ -251,11 +262,14 @@ class Dashboard(View):
                 context['cut_per_ir'] = booster_dashboard.cut_per_ir()
                 context['transactions'] = booster_dashboard.transactions(pk=user.id)
                 context['unseen_notif_count'] = booster_dashboard.unseen_notif_badge(pk=user.id)
+                context['teams'] = booster_dashboard.get_teams()
             else:
                 is_user = True
                 context['is_user'] = is_user
 
-            context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U")
+            context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U").order_by('-created_at')
+            context['notifications_history'] = Notifications.objects.filter(send_to=request.user, status="S").order_by('-created_at')[0:10]
+            context['invite_request'] = InviteMember.objects.filter(user=user)
 
             
             context['is_superuser'] = is_superuser
@@ -267,18 +281,50 @@ class Dashboard(View):
         
 
     def post(self, request):
-        print(request.FILES)
         profile_form = UpdateProfileForm(request.POST, request.FILES)
-        print(request.FILES['avatar'])
         if profile_form.is_valid():
             user = User.objects.get(id=request.user.id)
-            print(request.FILES['avatar'])
-            user.avatar = request.FILES['avatar']
+            data = profile_form.cleaned_data
+            username = data['username']
+            email = data['email']
+            national_code = data['national_code']
+            try:
+                user.avatar = request.FILES['avatar']
+            except:
+                pass
+
+            if user.discord_id:
+                if (username != user.username) or (email != user.email):
+                    messages.add_message(request, messages.WARNING, "You are not allowed to change your username or email")
+                    user.save()
+                    return redirect('dashboard')
+
+            
+            username_exist = User.objects.filter(username=username)
+            if username_exist.exists():
+                if (username_exist.exclude(username=user.username)):
+                    messages.add_message(request, messages.WARNING, "Another account is using this username")
+                    user.save()
+                    return redirect('dashboard')
+
+            email_exist = User.objects.filter(email=email)
+            if email_exist.exists():
+                if (email_exist.exclude(email=user.email)):
+                    messages.add_message(request, messages.WARNING, "Another account is using this email")
+                    user.save()
+                    return redirect('dashboard')
+
+            user.username = username
+            user.email = email
+            user.national_code = national_code
             user.save()
+
             messages.add_message(request, messages.SUCCESS, "Profile updated successfully")
             return redirect('dashboard')
+        
         else:
-            return render(request, 'accounts/dashboard.html', {'profile_form': profile_form})
+            messages.add_message(request, messages.WARNING, profile_form.errors)
+            return redirect('dashboard')
 
 
 class CreateTeam(View):
@@ -291,10 +337,10 @@ class CreateTeam(View):
 
             TeamDetail.objects.create(team=team, player=request.user, team_role="Leader")
             messages.add_message(request, messages.SUCCESS, 'Your team created successfully')
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
         else:
             messages.add_message(request, messages.ERROR, f"Error team form: name is required")
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
         
 class LeftTheTeam(View):
     def get(self, request, team_pk):
@@ -316,10 +362,10 @@ class LeftTheTeam(View):
                 next_leader.team_role = "Leader"
                 next_leader.save()
 
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
         else:
             messages.add_message(request, messages.ERROR, f"Request is not valid")
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
 
 
 class TeamDetailLink(View):
@@ -330,11 +376,15 @@ class TeamDetailLink(View):
                 return redirect('dashboard')
             
             team = Team.objects.filter(id=team_pk).first()
-
             if team:
+                if team.status != 'Verified':
+                    messages.add_message(request, messages.WARNING, 'Team not found')
+                    return redirect('dashboard')
+                
                 user_have_team = None
                 user = request.user
-                td = TeamDetail.objects.filter(team=team, player=user)
+                td = TeamDetail.objects.filter(player=user)
+                members = TeamDetail.objects.filter(team=team)
                 if td:
                     user_have_team = True
             else:
@@ -344,7 +394,9 @@ class TeamDetailLink(View):
 
             context = {
                 'team' : team,
-                'user_have_team' : user_have_team
+                'user_have_team' : user_have_team,
+                'members' : members,
+                'count' : members.count(),
             }
 
             return render(request, 'accounts/team.html', context)
@@ -362,11 +414,33 @@ class TeamDetailLink(View):
                 messages.add_message(request, messages.SUCCESS, 'Your request to join the team has been sent')
             else:
                 messages.add_message(request, messages.ERROR, 'You have already sent a request to this team')
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
         else:
             messages.add_message(request, messages.ERROR, 'You are not allowed to join the team')
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=team')
     
+
+class RemoveTeamMember(View):
+    def get(self, request, team_pk, member_pk):
+        leaders = TeamDetail.objects.filter(team__id=team_pk, team_role='Leader')
+        is_leader = False
+        for leader in leaders:
+            if request.user == leader.player:
+                is_leader = True
+                break
+        
+        if is_leader:
+            member = TeamDetail.objects.get(team__id=team_pk, id=member_pk)
+            user = member.player
+            team = member.team
+            member.delete()
+            messages.add_message(request, messages.SUCCESS, f'User {user.username} has been removed from your team')
+            Notifications.objects.create(send_to=user, title=f"{team.name} Team", caption="You have been removed")
+            return redirect(reverse('dashboard') + '?tab=team')
+        else:
+            messages.add_message(request, messages.ERROR, f'Request is not valid')
+            return redirect(reverse('dashboard') + '?tab=team')
+
 
 class JoinTeamResponse(View):
     def post(self, request):
@@ -384,12 +458,14 @@ class JoinTeamResponse(View):
             else:
                 Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} accepted, but you are already have a team")
                 messages.add_message(request, messages.WARNING, message=f"User {player.username} already has a team")
-            
-            rq = TeamRequest.objects.filter(team=team, player=player, status="Awaiting").first()
-            rq.status = "Verified"
-            rq.save()
-            del rq
-            return redirect('dashboard')
+            try:
+                rq = TeamRequest.objects.filter(team=team, player=player, status="Awaiting").first()
+                rq.status = "Verified"
+                rq.save()
+                del rq
+            except:
+                pass
+            return redirect(reverse('dashboard') + '?tab=team')
         else:
                 Notifications.objects.create(send_to=player, title="Join Team", caption=f"Your request to joined team {team.name} rejected.")
                 messages.add_message(request, messages.WARNING, message=f"User {player.username} rejected!")
@@ -399,7 +475,7 @@ class JoinTeamResponse(View):
                 del rq
 
                 
-                return redirect('dashboard')
+                return redirect(reverse('dashboard') + '?tab=team')
         
 class SeenNotif(View):
     def get(self, request):
@@ -408,9 +484,8 @@ class SeenNotif(View):
             for nf in notif:
                 nf.status = 'S'
                 nf.save()
-                nf.delete()
             
-        return redirect('dashboard')
+        return redirect(reverse('dashboard') + '?tab=notifications')
 
 
 class WalletUpdateDetail(View):
@@ -429,7 +504,7 @@ class WalletUpdateDetail(View):
             return redirect('dashboard')
         else:
             messages.add_message(request, messages.ERROR, wallet_form.errors)
-            return redirect('dashboard')
+            return redirect(reverse('dashboard') + '?tab=wallet')
         
 
 class AskingMoney(View):
@@ -440,10 +515,18 @@ class AskingMoney(View):
                 currency = request.POST['asking_money_type']
                 amount = int(request.POST['asking_money_amount'])
                 wallet = Wallet.objects.get(player=user)
-                if amount <= wallet.amount:
+
+                amount = amount * 1000
+                if (amount <= wallet.amount) and (wallet.amount >= 1000):
                     if amount >= 1:
+                        to_day_request = Transaction.objects.filter(requester=user, created__day=timezone.datetime.today().day).count()
+                        if to_day_request >= 2:
+                            messages.add_message(request, messages.WARNING, "You can payment request twice a day")
+                            return redirect(reverse('dashboard') + '?tab=wallet')
+                        
                         wallet.amount -= amount
                         wallet.save()
+                        amount = amount // 1000
                         if currency == 'IR':
                             try:
                                 cut_in_ir = CutInIR.objects.last()
@@ -451,9 +534,7 @@ class AskingMoney(View):
                             except:
                                 Transaction.objects.create(requester=user, amount=amount, currency=currency, caption="there was a problem to convert the rate, the amount mentioned is in Cut")
                             else:
-                                print(amount)
                                 amount = amount * cut_in_ir
-                                print(amount)
                                 Transaction.objects.create(requester=user, amount=amount, currency=currency)
                             messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
                         else:        
@@ -467,5 +548,206 @@ class AskingMoney(View):
 
                 else:
                     messages.add_message(request, messages.WARNING, 'Your wallet balance is not enough')
-
+            
         return redirect('dashboard')
+    
+
+
+class ForgetPassword(View):
+    def get(self, request):
+        form = ForgetPasswordForm()
+
+        context = {
+            'form' : form,
+        }
+
+        return render(request, 'accounts/forgetpassword.html', context)
+    
+    def post(self, request):
+        form = ForgetPasswordForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            email = data['email']
+
+            user = User.objects.filter(email=email)
+
+            if user:
+                user = User.objects.filter(email=email).first()
+                if user.discord_id:
+                    messages.add_message(request, messages.WARNING, "You are logged in with Discord, you cannot change your password")
+                    return redirect('login')
+                
+                numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+                confirm_code = ''
+                for i in range(6):
+                    confirm_code += random.choice(numbers)
+
+                request.session['confirm_code'] = confirm_code
+                request.session['email_address'] = data['email']
+
+                subject = 'Wixana | Authentication'
+                message = f'Confirm code: {confirm_code} \n\n If this request is not from your side, inform the support through a ticket.\n\n === WIXANA ==='
+                email_from = settings.EMAIL_HOST_USER
+                email_to = [data['email']]
+
+                try:
+                    send_mail(subject, message, email_from, email_to)
+                except:
+                    messages.add_message(request, messages.WARNING, 'Something went wrong! please try again')
+                    return redirect('forgetpassword')
+                return redirect('checkpassword')
+
+            else:
+                messages.add_message(request, messages.WARNING, 'No account found with this email')
+                return redirect('forgetpassword')
+        else:
+            context = {
+                'form' : form
+            }
+            return render(request, 'accounts/forgetpassword.html', context)
+
+
+class CheckPassword(View):
+    def get(self, request):
+        if request.session['confirm_code']:
+            form = CheckPasswordForm()
+
+            context = {
+                'form' : form,
+            }
+
+            return render(request, 'accounts/checkpassword.html', context)
+        else:
+            return redirect('forgetpassword')
+    
+    def post(self, request):
+        form = CheckPasswordForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            if request.session['confirm_code'] == data['check_code']:
+                del request.session['confirm_code']
+
+                return redirect('resetpassword')
+            else:
+                context = {
+                    'form' : form,
+                }
+                messages.add_message(request, messages.ERROR, 'Code is not valid')
+                return render(request, 'accounts/checkpassword.html', context)
+        else:
+            context = {
+                'form' : form
+            }
+            return render(request, 'accounts/checkpassword.html', context)
+        
+
+class ResetPassword(View):
+    def get(self, request):
+        try:
+            form = ResetPasswordForm()
+            context = {
+                'form' : form,
+            }
+            return render(request, 'accounts/resetpassword.html', context)
+        except:
+            return redirect('forgetpassword')
+    
+    def post(self, request):
+        form = ResetPasswordForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            try:
+                email = request.session['email_address']
+                user = User.objects.get(email = email)
+                user.set_password(data['password'])
+                user.save()
+                del request.session['email_address']
+                messages.add_message(request, messages.SUCCESS, 'Your password changed successfully, Enter it now!')
+                return redirect('login')
+            except:
+                messages.add_message(request, messages.WARNING, 'There was a problem in reset password, try again')
+                return redirect('forgetpassword')
+        else:
+            context = {
+                 'form' : form,
+            }
+            return render(request, 'accounts/resetpassword.html', context)
+
+
+class InviteUser(View):
+    def get(self, request, team_pk, user_pk):
+        try:
+            user = User.objects.get(id=user_pk)
+            team = Team.objects.get(id=team_pk)
+            InviteMember.objects.create(team=team, user=user, answer='Pending')
+            messages.add_message(request, messages.SUCCESS, f"Your invitation request has been sent to user {user.username}")
+            return redirect(reverse('dashboard') + '?tab=team')
+        except:
+            messages.add_message(request, messages.WARNING, f"There was problem to send invitation request, Try again")
+            return redirect(reverse('dashboard') + '?tab=team')
+
+
+class InviteUserResponse(View):
+    def get(self, request, team_pk, user_pk, response):
+        try:
+            user = User.objects.get(id=user_pk)
+            team = Team.objects.get(id=team_pk)
+            answer = response
+
+            if answer == "Accept":
+                if not TeamDetail.objects.filter(player=user):
+                    TeamDetail.objects.create(team=team, player=user)
+                    tds = TeamDetail.objects.filter(team=team, team_role='Leader')
+                    for td in tds:
+                        Notifications.objects.create(send_to=td.player, title="Join Team", caption=f"User {user.username} joined to your team")
+                else:
+                    messages.add_message(request, messages.WARNING, message=f"you are already have a team")
+                im = InviteMember.objects.get(team=team, user=user)
+                im.delete()
+                return redirect(reverse('dashboard') + '?tab=team')
+            elif answer == 'Reject':
+                im = InviteMember.objects.get(team=team, user=user)
+                im.delete()
+
+                messages.add_message(request, messages.WARNING, f"Resault was recorded")
+                return redirect(reverse('dashboard') + '?tab=notifications')
+            else:
+                messages.add_message(request, messages.WARNING, f"Request is not valid")
+                return redirect(reverse('dashboard') + '?tab=notifications')
+        except:
+            messages.add_message(request, messages.WARNING, f"Request is not valid")
+            return redirect(reverse('dashboard') + '?tab=notifications')
+
+
+class PositionMemberTeam(View):
+    def get(self, request, team_pk, user_pk):
+        leaders = TeamDetail.objects.filter(team__id=team_pk, team_role='Leader')
+        is_leader = False
+        for leader in leaders:
+            if request.user == leader.player:
+                is_leader = True
+                break
+        
+        if is_leader:
+            td = TeamDetail.objects.filter(id=user_pk).first()
+            if request.GET['pos'] == 'admin':
+                td.team_role = 'Admin'
+            elif request.GET['pos'] == 'leader':
+                team = td.team 
+                leader = TeamDetail.objects.filter(team=team, team_role='Leader').first()   
+                leader.team_role = 'Admin'
+                leader.save()
+                td.team_role = 'Leader'
+            elif request.GET['pos'] == 'member':
+                td.team_role = 'Member'
+            
+            td.save()
+            messages.add_message(request, messages.SUCCESS, message=f'User {td.player.username} changed to {td.team_role}')
+            Notifications.objects.create(send_to=td.player, title="Change in the team", caption=f"Your role in the team was changed to {td.team_role}")
+            return redirect(reverse('dashboard') + '?tab=team')
+        else:
+            messages.add_message(request, messages.ERROR, 'Request is not valid')
+            return redirect(reverse('dashboard') + '?tab=team')

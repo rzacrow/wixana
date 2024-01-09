@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}پنل کاربری{% endblock %}
+{% block title %}Wixana{% endblock %}
 
 
 {% block body %}
@@ -8,7 +8,7 @@
 <div class="back-color-fit">
         <!-- Dashboard -->
         <div class="row from-top-200">
-            <div class="col">
+            <div class="col disp-flex justify-content-center flex-column">
                 <!-- Messages -->
                 {% if messages %}
                 {% for message in messages %}
@@ -24,14 +24,6 @@
                     {% include 'accounts/booster_dashboard.html' %}
                 {% endif %}
 
-
-                <div class="container">
-                    <div class="row">
-                        <div class="col">
-                            <p class="min-height-100"></p>
-                        </div>
-                    </div>
-                </div>
 
 
             </div>

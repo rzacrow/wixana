@@ -20,6 +20,7 @@ class User(AbstractUser):
     user_type = models.CharField(max_length=1, choices=USER_TYPE_CHOICES, blank=False, null=False, default="U")
     discord_id = models.CharField(max_length=256, blank=True, null=True)
     avatar_hash = models.CharField(max_length=256, blank=True, null=True)
+    national_code = models.CharField(max_length=10, blank=True, null=True, unique=True)
     
     def __str__(self) -> str:
         return self.username
@@ -69,10 +70,18 @@ class Alt(models.Model):
 
 
 class Team(models.Model):
+    TEAM_STATUS_CHOICES = (
+        ('Verified','Verified'),
+        ('Pending','Pending'),
+        ('Rejected','Rejected'),
+    )
     name = models.CharField(max_length=128, blank=False, null=False)
     team_url = models.CharField(max_length=258, blank=True, null=True)
+    status = models.CharField(max_length=8, default='Pending', choices=TEAM_STATUS_CHOICES)
+
     def __str__(self) -> str:
         return self.name
+
 
 @receiver(post_save, sender=Team)
 def populate_parents(sender, instance, created, **kwargs):
@@ -85,6 +94,7 @@ def populate_parents(sender, instance, created, **kwargs):
 class TeamDetail(models.Model):
     ROLE_TEAM_CHOICES = (
         ('Leader', 'Leader'),
+        ("Admin", "Admin"),
         ('Member', 'Member'),
     )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
@@ -103,6 +113,16 @@ class TeamRequest(models.Model):
     player = models.ForeignKey(User, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     status = models.CharField(max_length=8, choices=TEAM_STATUS_CHOICES, default='Awaiting')
+
+class InviteMember(models.Model):
+    INVITE_ANSWER = (
+        ("Accept", "Accept"),
+        ("Reject", "Reject"),
+        ("Pending", "Pending"),
+    )
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    answer = models.CharField(choices=INVITE_ANSWER)
 
 class Notifications(models.Model):
     NOTIF_CHOICES = (

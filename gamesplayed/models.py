@@ -47,19 +47,30 @@ class CutDistributaion(models.Model):
 
 class Role(models.Model):
     name = models.CharField(max_length=128, blank=False, null=False)
-    value = models.FloatField(default=1.00)
+    ratio = models.FloatField(default=1.00)
 
     def __str__(self) -> str:
         return self.name
+    
+    @classmethod
+    def get_default_role(cls):
+        role = cls.objects.filter()
+        if role:
+            return role.first().id
+        role = cls.objects.get_or_create(
+            name="default booster 1.0",
+            defaults=dict(ratio=1.0)
+        )
+        return role[0].id
     
 
 
 class AttendanceDetail(models.Model):
     attendane = models.ForeignKey(Attendance, on_delete=models.CASCADE)
-    role = models.ForeignKey(Role, on_delete=models.SET(1))
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, default=Role.get_default_role, null=True)
     player = models.ForeignKey(User, on_delete=models.PROTECT)
     missing_boss = models.IntegerField(default=0)
-    multiplier = models.FloatField(default=1.1)
+    multiplier = models.FloatField(default=1.0)
     cut = models.IntegerField(default=0)
 
     def __str__(self) -> str:

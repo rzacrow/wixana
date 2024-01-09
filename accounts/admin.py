@@ -55,6 +55,19 @@ class AltAdmin(ModelAdmin):
     list_display = ['name','player', 'status']
     ordered = ['status']
 
+    actions = [
+        'change_alts_verified',
+        'change_alts_rejected'
+    ]
+    @admin.action(description="Change selected alts to 'Verified'")
+    def change_alts_verified(self, request, queryset):
+        queryset.update(status='Verified')
+
+    @admin.action(description="Change selected alts to 'Rejected'")
+    def change_alts_rejected(self, request, queryset):
+        queryset.update(status='Rejected')
+
+
     def save_model(self, request, obj, form, change):
         if 'status' in form.changed_data:
             Notifications.objects.create(send_to=obj.player, title="Alt status", caption=f"Your Alt {obj.name} status changed by admin")
@@ -82,11 +95,10 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     add_form = UserCreationForm
 
     def changeform_view(self, request, obj, form, change):
-        user = um.objects.filter(id=obj).first()
-
-        perm = user.has_perm('accounts.change_user')
-        if not perm:
+        if request.user.user_type != 'O':
             raise PermissionDenied()
+        
+        user = um.objects.get(id=obj)
         if user:
             if user.user_type != 'U':
                 self.inlines = [
@@ -149,28 +161,27 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     def get_ordering(self, request):
         return ["username"]
     
-    def save_model(self, request, obj, form, change):
+    def save_model(self, request, obj, form, change):        
         if obj.user_type == 'B':
             try:
                 get_wallet = Wallet.objects.get(player__username=obj.username)
             except:
                 Wallet.objects.create(player=obj, card_full_name='---')
         if 'user_type' in form.changed_data:
-            if obj.user_type == 'A':
-                obj.is_staff = True
-                admin_perm = add_user_permission()
-                print(admin_perm)
-                obj.user_permissions.set(admin_perm)
-                obj.save()
-            elif obj.user_type in ['B', 'U']:
-                obj.is_staff = False
-                obj.user_permissions.clear()
-                obj.save()
+            if request.user.user_type == 'O':
+                if obj.user_type == 'A':
+                    obj.is_staff = True
+                    obj.save()
+                elif (obj.user_type == 'B') or (obj.user_type == 'U'):
+                    obj.is_staff = False
+                    obj.is_superuser = False
+                    obj.save()
+                elif obj.user_type == 'O':
+                    obj.is_staff = True
+                    obj.is_superuser = True
+                    obj.save()
             else:
-                if obj.is_superuser != True:
-                    raise PermissionError()
-
-
+                raise PermissionDenied()
             Notifications.objects.create(send_to=obj, title="Change User Permission", caption=f"your profile permission changed to the '{obj.user_type}' level by Owner")
         super().save_model(request, obj, form, change)
 
@@ -181,8 +192,15 @@ class TeamDetailInline(TabularInline):
     
 @admin.register(Team)
 class TeamAdmin(ModelAdmin):
-    list_display = ['name']
+    list_display = ['name', 'status']
 
     inlines = [
         TeamDetailInline
     ]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.status == 'Rejected':
+            leader = TeamDetail.objects.filter(team=obj).first()
+            Team.objects.get(id=obj.id).delete()
+            Notifications.objects.create(send_to=leader.player, title="Your team has been deleted by the admin")

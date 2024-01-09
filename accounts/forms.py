@@ -1,3 +1,4 @@
+from typing import Any
 from django.forms import ModelForm
 from django import forms
 from .models import User, Team, Wallet
@@ -91,9 +92,18 @@ class LoginForm(forms.Form):
     
 
 class UpdateProfileForm(forms.Form):
-    avatar = forms.ImageField(allow_empty_file=True, required=True)
-    username = forms.CharField(max_length=128, required=True, widget=forms.TextInput(attrs={'readonly':'readonly'}), help_text=None)
-    email = forms.CharField(max_length=128, required=True, widget=forms.TextInput(attrs={'readonly':'readonly'}))
+    avatar = forms.ImageField(allow_empty_file=True, required=False)
+    username = forms.CharField(max_length=128, required=True, help_text=None)
+    email = forms.EmailField(max_length=128, required=True)
+    national_code = forms.CharField(max_length=10, required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        national_code = cleaned_data.get('national_code')
+
+        if len(national_code) != 0: 
+            if (len(national_code) != 10) or (not national_code.isdigit()):
+                raise ValidationError('National code must be 10 digits')
 
 class CreateTeamForm(ModelForm):
     class Meta:
@@ -113,3 +123,40 @@ class WalletForm(ModelForm):
         model = Wallet
         fields = ['card_number', 'IR', 'card_full_name']
 
+    def clean(self):
+        cleaned_data = super().clean()
+        card_number = cleaned_data.get('card_number')
+        IR = cleaned_data.get('IR')
+
+        if not card_number.isdigit():
+            raise ValidationError("card number must be a nubmer only")
+        if not IR.isdigit():
+            raise ValidationError("IR must be a nubmer only")
+        if len(card_number) != 16:
+            raise ValidationError("card number must be 16 digits")
+        if len(IR) != 24:
+            raise ValidationError("IR muset be 24 digits")
+
+
+class ResetPasswordForm(forms.Form):
+    password = forms.CharField(max_length=16, required=True, strip=True, widget=forms.PasswordInput, label='Password')
+    repassword = forms.CharField(max_length=16, required=True, strip=True, widget=forms.PasswordInput, label='Re Password')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        repassword = cleaned_data.get('repassword')
+
+        if len(password) < 8:
+            raise ValidationError('Password should be greater than 8 characters')
+            
+        if password != repassword:
+            raise ValidationError('Password and Re Password must be the same')
+
+
+class ForgetPasswordForm(forms.Form):
+    email = forms.EmailField(max_length=255, required=True, label='Email')
+
+
+class CheckPasswordForm(forms.Form):
+    check_code = forms.CharField(max_length=6, required=True, strip=True, label='Confirm Code')

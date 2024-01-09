@@ -1,7 +1,6 @@
 {% load static %}
-<div class="container">
     <div class="row">
-        <div class="col">
+        <div class="col disp-flex justify-content-center">
                 <div class="d-flex align-items-start column-mobile">
 
                     <!-- Side bar -->
@@ -14,14 +13,14 @@
                         </button>
 
 
-                        <button class="nav-link center-icon-text color-white none-hover active" id="pills-users-tab" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="true">
+                        <button class="nav-link center-icon-text color-white none-hover {% if not tab %}active{% endif %}" id="pills-users-tab" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="true">
                             <span class="material-symbols-outlined">
                                 account_circle
                             </span>&nbsp;Account
                         </button>
 
                         {% if not is_user %}
-                        <button class="nav-link center-icon-text color-white none-hover position-relative" id="v-pills-teams-tab" data-bs-toggle="pill" data-bs-target="#v-pills-teams" type="button" role="tab" aria-controls="v-pills-teams" aria-selected="false" {% if is_user %}disabled{% endif %}>
+                        <button class="nav-link center-icon-text color-white none-hover position-relative {% if tab == 'team'%}active{% endif %}" id="v-pills-teams-tab" data-bs-toggle="pill" data-bs-target="#v-pills-teams" type="button" role="tab" aria-controls="v-pills-teams" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 groups
                             </span>&nbsp;Team
@@ -38,16 +37,16 @@
                         <button class="nav-link center-icon-text color-white none-hover" id="pills-recent-match-tab" data-bs-toggle="pill" data-bs-target="#pills-recent-match" type="button" role="tab" aria-controls="pills-recent-match" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 joystick
-                                </span>&nbsp;Recent Matches
+                                </span>&nbsp;Attendance
                         </button>
 
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-wallet-tab" data-bs-toggle="pill" data-bs-target="#pills-wallet" type="button" role="tab" aria-controls="pills-wallet" aria-selected="false" {% if is_user %}disabled{% endif %}>
+                        <button class="nav-link center-icon-text color-white none-hover {% if tab == 'wallet'%}active{% endif %}" id="pills-wallet-tab" data-bs-toggle="pill" data-bs-target="#pills-wallet" type="button" role="tab" aria-controls="pills-wallet" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 account_balance_wallet
                                 </span>&nbsp;Wallet
                         </button>
                         {% endif %}
-                        <button class="nav-link center-icon-text color-white none-hover position-relative" id="pills-notifications-tab" data-bs-toggle="pill" data-bs-target="#pills-notifications" type="button" role="tab" aria-controls="pills-notifications" aria-selected="false">
+                        <button class="nav-link center-icon-text color-white none-hover position-relative {% if tab == 'notifications' %}active{% endif %}" id="pills-notifications-tab" data-bs-toggle="pill" data-bs-target="#pills-notifications" type="button" role="tab" aria-controls="pills-notifications" aria-selected="false">
                             <span class="material-symbols-outlined">
                                 notifications_active
                             </span>&nbsp;Notifications
@@ -80,7 +79,7 @@
                     <!-- Content -->
                     <div class="tab-content" id="v-pills-tabContent">
                         <!-- Users Tab -->
-                        <div class="tab-pane fade show active dashboard-detail padding-from-side" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
+                        <div class="tab-pane fade {% if not tab %}show active{% endif %} dashboard-detail" id="pills-users" role="tabpanel" aria-labelledby="pills-users-tab" tabindex="0">
                             <div class="row">
                                 <div class="col">
                                             <div class=" dashboard-detail-item" id="user-detail">                                        
@@ -98,7 +97,7 @@
                                                                     </span>&nbsp;Account Detail
                                                                 </p>
                                                                 {% if profile_form %}
-                                                                    <form method="post" action="{% url 'dashboard' %}" enctype="multipart/form-data">
+                                                                    <form method="post" action="{% url 'dashboard' %}" enctype="multipart/form-data" novalidate>
                                                                         {% csrf_token %}
                                                                         <div class="flex-center">
                                                                             <img src="{% if user.avatar_hash %}../../{{user.avatar_hash}}{% elif user.avatar %}{{user.avatar.url}}{% else %}{% static '../media/profile/profile-icon.png' %}{%endif %}" class="image-profile-detail shadow-lg"> 
@@ -188,171 +187,299 @@
 
                         {% if not is_user %}
                         <!-- Teams -->
-                        <div class="tab-pane fade dashboard-detail" id="v-pills-teams" role="tabpanel" aria-labelledby="v-pills-teams-tab" tabindex="0">
+                        <div class="tab-pane fade {% if tab == 'team'%}show active{% endif %} dashboard-detail" id="v-pills-teams" role="tabpanel" aria-labelledby="v-pills-teams-tab" tabindex="0">
                             <div class="row">
                                     {% if team %}
                                         <div class="col">
-                                            <div class="dashboard-detail-item">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        group
-                                                        </span>&nbsp;{{team.detail.name}}
-                                                </p>
+                                            
 
-                                                <div class="content">
-                                                    <div class="row">
+                                            {% if team.team_status == 'Verified' %}
+                                                <!-- User Team -->
+                                                <div class="dashboard-detail-item">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            group
+                                                            </span>&nbsp;{{team.detail.name}}
+                                                    </p>
 
-                                                        <div class="col-lg-3 dis-none-mobile"></div>
+                                                    <div class="content">
+                                                        <div class="row">
 
-                                                        <div class="col-lg-6 from-top-25">
-                                                            <table class="table">
-                                                                <thead>
-                                                                    <th class="bg-transparent color-white-important">user</th>
-                                                                    <th class="bg-transparent color-white-important">Team Role</th>
-                                                                </thead>
-                                                                {% for member in team.members%}
-                                                                    <tr>
-                                                                        <td class="bg-transparent color-white-important">{{member.player.username}}</td>
-                                                                        <td class="bg-transparent color-white-important">{{member.team_role}}</td>
-                                                                    </tr>
-                                                                {% endfor %}
-                                                            </table>
-                                                            <br>
-                                                            <div class="flex-between flex-column">
-                                                                
-                                                                <div class="center-icon-text from-top-25">
-                                                                    <span class="material-symbols-outlined">
-                                                                        link
-                                                                        </span>&nbsp;Address: &nbsp;<span class="badge bg-danger">{{team.detail.team_url}}</span>
-                                                                </div>
+                                                            <div class="col-lg-3 dis-none-mobile"></div>
 
-                                                                <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-light center-icon-text color-purpole from-top-15">
-                                                                    <span class="material-symbols-outlined">
-                                                                        door_back
-                                                                        </span>&nbsp;Left the team
-                                                                </a>
-                                                            </div>
-                                                            <br>
-                                                        </div>
+                                                            <div class="col-lg-6 from-top-25">
+                                                                <table class="table align-middle">
+                                                                    <thead class="table-warning">
+                                                                        {% if team.is_leader_team %}<th>Options</th>{% endif %}
+                                                                        <th>Members</th>
+                                                                        <th>Team Role</th>
+                                                                    </thead>
+                                                                    {% for member in team.members%}
+                                                                        <tr>
+                                                                            {% if team.is_leader_team %}
+                                                                                <td class="bg-transparent color-white-important text-align-center">
+                                                                                    {% if member.player.username != user.username %}
+                                                                                
+                                                                                        <div class="dropdown">
+                                                                                            <button class="drop-down-btn" onclick="btn_dropdown( '{{member.id}}' )">
+                                                                                                <span class="material-symbols-outlined">
+                                                                                                    more_vert
+                                                                                                    </span>
+                                                                                            </button>
 
-                                                        <div class="col-lg-3 dis-none-mobile"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                    
-                                            {% if team.is_leader_team %}
-                                                
-                                                        <div class="dashboard-detail-item from-top-25">
-                                                            <p class="center-icon-text">
-                                                                <span class="material-symbols-outlined">
-                                                                    group_add
-                                                                    </span>&nbsp;New request
-                                                            </p>
-
-                                                            <div class="content">
-                                                                <div class="row">
-
-                                                                    <div class="col-lg-3"></div>
-
-                                                                    <div class="col-lg-6 from-top-25">
-                                                                        {% if team.new_requests %}
-                                                                                {% for request in team.new_requests%}
-                                                                                    <div class="row">
-                                                                                        <div class="col-12 color-white-important">
-                                                                                            User: {{request.player}}
+                                                                                            <ul class="dropdown-menu" id="dropdown-menu-{{member.id}}">
+                                                                                                <li>
+                                                                                                    <a href="{% url 'remove_team_member' team.detail.id member.id %}" class="dropdown-item center-icon-text"><span class="material-symbols-outlined">
+                                                                                                        delete
+                                                                                                        </span>&nbsp; Remove</a>
+                                                                                                </li>
+                                                                                                {% if member.team_role == 'Member' %}
+                                                                                                <li>
+                                                                                                    <a href="{% url 'position_team_member' team.detail.id member.id %}?pos=admin" class="dropdown-item center-icon-text"><span class="material-symbols-outlined">
+                                                                                                        social_leaderboard
+                                                                                                        </span>&nbsp; Promoted to admin</a>
+                                                                                                </li>
+                                                                                                {% elif member.team_role == 'Admin' %}
+                                                                                                <li>
+                                                                                                    <a href="{% url 'position_team_member' team.detail.id member.id %}?pos=leader" class="dropdown-item center-icon-text"><span class="material-symbols-outlined">
+                                                                                                        social_leaderboard
+                                                                                                        </span>&nbsp; Promoted to Leader</a>
+                                                                                                </li>
+                                                                                                <li>
+                                                                                                    <a href="{% url 'position_team_member' team.detail.id member.id %}?pos=member" class="dropdown-item center-icon-text"><span class="material-symbols-outlined">
+                                                                                                        person_4
+                                                                                                        </span>&nbsp; Demotion to Member</a>
+                                                                                                </li>
+                                                                                                {% endif %}
+                                                                                            </ul>
                                                                                         </div>
 
-                                                                                        <div class="col-10">
-                                                                                            <form method="post" action="{% url 'join_team_response' %}" class="row row-cols-lg-auto g-3 align-items-center margin-bottom-less">
-                                                                                                {% csrf_token %}
-                                                                                                <input type="hidden" name="username" value="{{request.player}}">
-                                                                                                <input type="hidden" name="team" value="{{team.detail.id}}">
+                                                                                    {% endif %}
+                                                                                </td>
+                                                                            {% endif %}
+                                                                            
+                                                                            <td class="bg-transparent color-white-important text-align-center">{{member.player.username}}</td>
+                                                                            <td class="bg-transparent color-white-important text-align-center">
+                                                                                    {{member.team_role}}
+                                                                            </td>
+                                                                        </tr>
+                                                                    {% endfor %}
+                                                                </table>
 
-                                                                                                <div class="col-12">
-                                                                                                    <div class="form-check form-check-inline">
-                                                                                                        <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="accept" checked>
-                                                                                                        <label class="form-check-label" for="inlineRadio1">Accept</label>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <div class="col-12">
-                                                                                                    <div class="form-check form-check-inline">
-                                                                                                        <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="reject">
-                                                                                                        <label class="form-check-label" for="inlineRadio1">Reject</label>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <div class="col-12">
-                                                                                                    <input type="submit" value="Submit" class="btn btn-submit margin-top-16">
-                                                                                                </div>
-                                                                                            </form>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <hr>
-                                                                                {% endfor %}
-                                                                        {% else %}
-                                                                            <p class="min-height-200 center-r-c">There is no request</p>
-                                                                        {% endif %}
+                                                                <br>
+                                                                <div class="flex-between flex-column">
+                                                                    
+                                                                    <div class="center-icon-text from-top-25">
+                                                                        <span class="material-symbols-outlined">
+                                                                            link
+                                                                            </span>&nbsp;Address: &nbsp;<span class="badge bg-dark">{{team.detail.team_url}}</span>
                                                                     </div>
 
-
-                                                                    <div class="col-lg-3"></div>
+                                                                    <a href="{% url 'left_the_team' team_pk=team.detail.id %}" class="btn btn-danger center-icon-text color-white-important from-top-15">
+                                                                        <span class="material-symbols-outlined">
+                                                                            door_back
+                                                                            </span>&nbsp;Left the team
+                                                                    </a>
                                                                 </div>
+                                                                <br>
                                                             </div>
-                                                        </div>
-                                            {% endif %}
-                                        </div>
-                                    {% else %}
-                                            <div class="col dashboard-detail-item from-top-25-mobile">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        group_add
-                                                        </span>&nbsp;Create Team
-                                                </p>
 
-                                                <div class="content">
-                                                    <div class="row">
-
-                                                        <div class="col-lg-3"></div>
-                                                        
-                                                        <div class="col-lg-6 padding-25">
-                                                        <form method="post" action="{% url 'create_team' %}">
-                                                            {% csrf_token %}
-                                                            {{ create_team_form.as_div }}
-                                                            <input type="submit" value="Create" class="btn btn-submit color-white">
-                                                        </form>
-
-                                                        <div class="col-lg-3"></div>
-
+                                                            <div class="col-lg-3 dis-none-mobile"></div>
                                                         </div>
                                                     </div>
+                                                </div>
+
+
+                                            <!-- if team was not verified -->
+                                            {% else %}
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <p class="min-height-200 center-r-c dashboard-detail-item"><span class="material-symbols-outlined color-red">
+                                                            close
+                                                            </span>Your team has not yet been approved by the admin</p>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+
+                                            <!-- All teams -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    {% if teams %}
+                                                            <div class="dashboard-detail-item from-top-25">
+                                                                <p class="center-icon-text">
+                                                                    <span class="material-symbols-outlined">
+                                                                        groups_2
+                                                                        </span>&nbsp;Teams
+                                                                </p>
+                                                                <div class="row">
+                                                                    <div class="col">
+                                                                    {% for team in teams %}
+                                                                        <a href="{% url 'team_detail' team.name team.id %}">
+                                                                            <div class="alert alert-dark rounded flex-between align-center shadow-lg shadow-none-hover">
+                                                                                <img src="{% static 'accounts/images/team.png' %}" class="img-icon"> {{team.name}}
+                                                                            </div>
+                                                                        </a>
+                                                                    {% endfor %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                    {% else %}
+                                                        <div class="dashboard-detail-item from-top-25"> 
+                                                            <p class="min-height-200 center-r-c">There aren't any team</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+
+
+                                                <!-- New request to join team -->
+                                                {% if team.is_leader_team %}
+                                                            <div class="col-md-6">
+                                                                <div class="dashboard-detail-item from-top-25">
+                                                                    <p class="center-icon-text">
+                                                                        <span class="material-symbols-outlined">
+                                                                            group_add
+                                                                            </span>&nbsp;New request
+                                                                    </p>
+
+                                                                    <div class="content">
+                                                                        <div class="row">
+                                                                            <div class="col from-top-25">
+                                                                                {% if team.new_requests %}
+                                                                                        {% for request in team.new_requests%}
+                                                                                            <div class="row">
+                                                                                                <div class="col-3 color-white-important center-icon-text">
+                                                                                                        <span class="material-symbols-outlined">
+                                                                                                            person
+                                                                                                            </span> &nbsp;{{request.player}}
+                                                                                                </div>
+
+                                                                                                <div class="col-9">
+                                                                                                    <form method="post" action="{% url 'join_team_response' %}" class="row row-cols-lg-auto g-3 align-items-center margin-bottom-less">
+                                                                                                        {% csrf_token %}
+                                                                                                        <input type="hidden" name="username" value="{{request.player}}">
+                                                                                                        <input type="hidden" name="team" value="{{team.detail.id}}">
+
+
+                                                                                                            <div class="form-check form-check-inline">
+                                                                                                                <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="accept" checked>
+                                                                                                                <label class="form-check-label margin-bottom-0" for="inlineRadio1">Accept</label>
+                                                                                                            </div>
+
+                                                                                                            <div class="form-check form-check-inline">
+                                                                                                                <input class="form-check-input padding-5" type="radio" name="response" id="inlineRadio1" value="reject">
+                                                                                                                <label class="form-check-label margin-bottom-0" for="inlineRadio1">Reject</label>
+                                                                                                            </div>
+
+                                                                                                            <div class="form-check form-check-inline">
+                                                                                                                <input type="submit" value="Submit" class="btn btn-submit margin-top-16">
+                                                                                                            </div>
+                                                                                                    </form>
+                                                                                                </div>
+                                                                                                
+                                                                                            </div>
+                                                                                            <hr>
+                                                                                        {% endfor %}
+                                                                                {% else %}
+                                                                                    <p class="min-height-200 center-r-c"><span class="material-symbols-outlined color-red">
+                                                                                        close
+                                                                                        </span> There is no request</p>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                {% endif %}
+                                            </div>
+
+                                            <!-- Boosters -->
+                                            {% if team.is_leader_team %}
+                                            <div class="row">
+                                                <div class="col">
+                                                    {% if team.boosters %}
+                                                            <div class="dashboard-detail-item from-top-25">
+                                                                <p class="center-icon-text">
+                                                                    <span class="material-symbols-outlined">
+                                                                        person_search
+                                                                        </span>&nbsp;Boosters
+                                                                </p>
+                                                                <div class="row">
+                                                                    {% for booster in team.boosters %}
+                                                                        <div class="col-md-6">
+                                                                            <div class="alert alert-dark rounded flex-between align-center shadow-lg shadow-none-hover">
+                                                                                    <h6 class="center-icon-text"><span class="material-symbols-outlined">
+                                                                                        person_4
+                                                                                        </span>&nbsp;{{booster.username}}</h6>
+                                                                                    <a href="{% url 'invite_member' team.detail.id booster.id %}" class="btn btn-porpule-solid color-white-important center-icon-text"><span class="material-symbols-outlined">
+                                                                                        link
+                                                                                        </span>&nbsp;Invite</a>
+                                                                            </div>
+                                                                        </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            </div>
+                                                    {% else %}
+                                                        <div class="dashboard-detail-item from-top-25"> 
+                                                            <p class="min-height-200 center-r-c">There aren't any boosters</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                        </div>
+                                    {% else %}
+                                    <!-- Create Team -->
+                                            <div class="col-sm-6">
+                                                <div class="dashboard-detail-item">
+                                                    <p class="center-icon-text">
+                                                        <span class="material-symbols-outlined">
+                                                            group_add
+                                                            </span>&nbsp;Create Team
+                                                    </p>
+
+                                                    <div class="row">                                                            
+                                                            <div class="col padding-25">
+                                                            <form method="post" action="{% url 'create_team' %}">
+                                                                {% csrf_token %}
+                                                                {{ create_team_form.as_div }}
+                                                                <input type="submit" value="Create" class="btn btn-submit color-white">
+                                                            </form>
+                                                            </div>
+                                                    </div>
+
                                                 </div>
                                             </div>
 
-                                            <!--<div class="col dashboard-detail-item">
-                                                <p class="center-icon-text">
-                                                    <span class="material-symbols-outlined">
-                                                        diversity_3
-                                                        </span>&nbsp;Search Team
-                                                </p>
 
-                                                <div class="content">
-                                                    <div class="row">
-
-                                                        <div class="col-lg-3"></div>
-                                                        
-                                                        <div class="col-lg-6 padding-25">
-                                                        <form method="post" action="">
-                                                            {% csrf_token %}
-                                                            {{ create_team_form.as_div }}
-                                                            <input type="submit" value="Search" class="btn btn-outline-light">
-                                                        </form>
-
-                                                        <div class="col-lg-3"></div>
-
+                                            <!-- All teams -->
+                                            <div class="col-sm-6">
+                                                {% if teams %}
+                                                        <div class="dashboard-detail-item">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    groups_2
+                                                                    </span>&nbsp;Teams
+                                                            </p>
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                {% for team in teams %}
+                                                                    <a href="{% url 'team_detail' team.name team.id %}">
+                                                                        <div class="alert alert-dark rounded flex-between align-center shadow-lg shadow-none-hover">
+                                                                            <img src="{% static 'accounts/images/team.png' %}" class="img-icon"> {{team.name}}
+                                                                        </div>
+                                                                    </a>
+                                                                {% endfor %}
+                                                                </div>
+                                                            </div>
                                                         </div>
+                                                {% else %}
+                                                    <div class="dashboard-detail-item from-top-25"> 
+                                                        <p class="min-height-200 center-r-c">There aren't any team</p>
                                                     </div>
-                                                </div>
-                                            </div>-->
-
+                                                {% endif %}
+                                            </div>
                                     {% endif %}
                             </div>
                         </div>
@@ -431,190 +558,289 @@
                   
                   
                         <!-- Wallet -->
-                        <div class="tab-pane fade dashboard-detail" id="pills-wallet" role="tabpanel" aria-labelledby="pills-wallet-tab" tabindex="0">
+                        <div class="tab-pane fade {% if tab == 'wallet'%}show active{% endif %} dashboard-detail" id="pills-wallet" role="tabpanel" aria-labelledby="pills-wallet-tab" tabindex="0">
                             <div class="row">
-                                    <!-- Payment Request -->
                                     <div class="col">
 
+
+                                            <!-- Payment Request -->
                                             <div class="row">
-                                                <div class="col-md col-sm-12 dashboard-detail-item">
-                                                    <p class="center-icon-text">
-                                                        <span class="material-symbols-outlined">
-                                                            add_card
-                                                            </span>&nbsp;Payment request
-                                                    </p>
-                                                    <hr>
+                                                <div class="col-md-6">
+                                                    <div class="dashboard-detail-item">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                add_card
+                                                                </span>&nbsp;Payment request
+                                                        </p>
+                                                        <hr>
 
-                                                    <div class="content">
-                                                        <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
-                                                            {% csrf_token %}
-                                                            <label class="form-label">Amount</label>
-                                                            <input type="number" placeholder="amount in cut..." name="asking_money_amount">
+                                                        <div class="content">
+                                                            <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
+                                                                {% csrf_token %}
+                                                                <label class="form-label">Amount</label>
+                                                                <input type="number" placeholder="amount in cut..." name="asking_money_amount">
 
-                                                            <div class="mb-3 from-top-15">
-                                                                <label for="asking_money_type" class="form-label">Payment method</label>
-                                                                <select name="asking_money_type" id="asking_money_type" class="form-select">
-                                                                    <option value="CUT" selected>Cut</option>
-                                                                    <option value="IR">IR</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <input type="submit" value="Send" class="btn btn-porpule color-white">
-                                                            </div>
-                                                        </form>
+                                                                <div class="mb-3 from-top-15">
+                                                                    <label for="asking_money_type" class="form-label">Payment method</label>
+                                                                    <select name="asking_money_type" id="asking_money_type" class="form-select">
+                                                                        <option value="CUT" selected>Cut</option>
+                                                                        <option value="IR">IR</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <input type="submit" value="Send" class="btn btn-porpule color-white">
+                                                                </div>
+                                                            </form>
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <!-- Financial Reports -->
-                                                <div class="col-md col-sm-12 dashboard-detail-item from-top-25-mobile">
-                                                    <p class="center-icon-text">
-                                                        <span class="material-symbols-outlined">
-                                                            query_stats
-                                                            </span>&nbsp;Report
-                                                    </p>
-                                                    <hr>
-                                                    <div class="content">
-                                                        {% if wallet_report %}
-                                                            <div class="flex-between alert alert-warning">
-                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                                    monetization_on
-                                                                    </span>&nbsp;Wallet Balance:</div>
-                                                                <div>$ {{wallet_report.amount}}</div>
-                                                            </div>
+                                                <div class="col-md-6 from-top-25-mobile">
+                                                    <div class="dashboard-detail-item">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                query_stats
+                                                                </span>&nbsp;Report
+                                                        </p>
+                                                        <hr>
+                                                        <div class="content">
+                                                            {% if wallet_report %}
+                                                                <div class="flex-between alert alert-warning">
+                                                                    <div class="center-icon-text"><img src="{% static 'accounts/images/gold.png' %}" class="img-icon">&nbsp;Wallet Balance:</div>
+                                                                    <div>{{wallet_report.amount}}</div>
+                                                                </div>
 
-                                                            <div class="flex-between alert">
-                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                                    looks_one
-                                                                    </span>&nbsp;Today's Income:</div>
-                                                                <div>$ {{wallet_report.todays_income}}</div>
-                                                            </div>
+                                                                <div class="flex-between alert">
+                                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                        looks_one
+                                                                        </span>&nbsp;Today's Income:</div>
+                                                                    <div>{{wallet_report.todays_income}}</div>
+                                                                </div>
 
-                                                            <div class="flex-between alert">
-                                                                <div class="center-icon-text"><span class="material-symbols-outlined">
-                                                                    calendar_month
-                                                                    </span>&nbsp;Income this month:</div>
-                                                                <div>$ {{wallet_report.tomonth_income}}</div>
-                                                            </div>
-                                                        {% else %}
-                                                            <p class="min-height-200 center-r-c">there aren't any reports</p>
-                                                        {% endif %}
+                                                                <div class="flex-between alert">
+                                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                        counter_7
+                                                                        </span>&nbsp;Income this week:</div>
+                                                                    <div>{{wallet_report.toweek_income}}</div>
+                                                                </div>
+
+                                                                <div class="flex-between alert">
+                                                                    <div class="center-icon-text"><span class="material-symbols-outlined">
+                                                                        calendar_month
+                                                                        </span>&nbsp;Income this month:</div>
+                                                                    <div>{{wallet_report.tomonth_income}}</div>
+                                                                </div>
+                                                            {% else %}
+                                                                <p class="min-height-200 center-r-c"><span class="material-symbols-outlined color-red">
+                                                                    close
+                                                                    </span> there aren't any reports</p>
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
                                         <!-- Transaction -->
                                             <div class="row">
-                                                <div class="col dashboard-detail-item from-top-25">
-                                                    <p class="center-icon-text">
-                                                        <span class="material-symbols-outlined">
-                                                            history
-                                                            </span>&nbsp;Transaction History
-                                                    </p>
-                                                    
-                                                    {% if transactions %}
-                                                        <div class="table-responsive">
-                                                            <table class="table table-warning">
-                                                                <thead>
-                                                                    <th class="">Status</th>
-                                                                    <th class="">Date of request</th>
-                                                                    <th class="">details</th>
-                                                                    <th class="">Paid date</th>
-                                                                    <th class="">Currency</th>
-                                                                    <th class="">Amount</th>
-                                                                </thead>
-                                                                {% for ts in transactions %}
-                                                                    <tr>
-                                                                        <td class="">{{ts.status}}</td>
-                                                                        <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
-                                                                        <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
-                                                                        <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
-                                                                        <td class="">{{ts.currency}}</td>
-                                                                        <td class="">$ {{ts.amount}}</td>
-                                                                    </tr>
-                                                                {% endfor %}
-                                                            </table>
-                                                        </div>
-                                                    {% else %}
-                                                        <div class="content">
-                                                            <p class="min-height-200 center-r-c">there aren't any transaction</p>
-                                                        </div>
-                                                    {% endif %}
+                                                <div class="col from-top-25">
+                                                    <div class="dashboard-detail-item">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                history
+                                                                </span>&nbsp;Transaction History
+                                                        </p>
+                                                        
+                                                        {% if transactions %}
+                                                            <div class="table-responsive" style="overflow-x: auto !important;">
+                                                                <table class="table table-warning">
+                                                                    <thead>
+                                                                        <th class="">Status</th>
+                                                                        <th class="">Date of request</th>
+                                                                        <th class="">details</th>
+                                                                        <th class="">Paid date</th>
+                                                                        <th class="">Currency</th>
+                                                                        <th class="">Amount</th>
+                                                                    </thead>
+                                                                    {% for ts in transactions %}
+                                                                        <tr>
+                                                                            <td class="">{{ts.status}}</td>
+                                                                            <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
+                                                                            <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
+                                                                            <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
+                                                                            <td class="">{{ts.currency}}</td>
+                                                                            <td class="">
+                                                                                {% if ts.currency == 'CUT' %}&nbsp;{{ts.amount}} K
+                                                                                {% else %}
+                                                                                T&nbsp;{{ts.amount}}
+                                                                                {% endif %}
+                                                                            </td>
+                                                                        </tr>
+                                                                    {% endfor %}
+                                                                </table>
+                                                            </div>
+                                                        {% else %}
+                                                            <div class="content">
+                                                                <p class="min-height-200 center-r-c">there aren't any transaction</p>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
                                                 </div> 
                                             </div>    
 
 
                                             <div class="row">
                                                 <!-- Wallet Detail -->
-                                                <div class="col-lg col-md-12 dashboard-detail-item from-top-25">
-                                                    <p class="center-icon-text">
-                                                        <span class="material-symbols-outlined">
-                                                            wallet
-                                                            </span>&nbsp;Wallet Detail
-                                                    </p>
-                                                    
-                                                    <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
-                                                        {% csrf_token %}
-                                                        <div class="bank-card">
-                                                            {{wallet.as_div}}
-                                                        </div>
-                                                        <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
-                                                    </form>
+                                                <div class="col-lg-6 from-top-25">
+                                                    <div class="dashboard-detail-item">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                wallet
+                                                                </span>&nbsp;Wallet Detail
+                                                        </p>
+                                                        
+                                                        <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
+                                                            {% csrf_token %}
+                                                            <div class="bank-card">
+                                                                {{wallet.as_div}}
+                                                            </div>
+                                                            <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
+                                                        </form>
+                                                    </div>
                                                 </div>
 
 
                                                 <!-- Currency Exchange -->
-                                                <div class="col-lg col-md-12 dashboard-detail-item from-top-25">
-                                                    <p class="center-icon-text">
-                                                        <span class="material-symbols-outlined">
-                                                            currency_exchange
-                                                            </span>&nbsp; Currency Exchange
-                                                    </p>
-                                                    <hr>
-                                                    <div class=>
-                                                        <form class="alert">
-                                                            <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
-                                                            <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
-                                                            <input type="submit" value="Calculate" class="btn btn-porpule color-white from-top-15" id="cut_to_ir_calculate"j>
-                                                        </form>
-                                                        <div class="flex-between alert">
-                                                            <div>Cut price today:</div>
-                                                            <div>{% if cut_per_ir %}$ {{cut_per_ir}}{% else %}Not define{% endif %}</div>
+                                                <div class="col-lg-6 from-top-25">
+                                                    <div class="dashboard-detail-item">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                currency_exchange
+                                                                </span>&nbsp; Currency Exchange
+                                                        </p>
+                                                        <hr>
+                                                        <div>
+                                                            <form class="alert">
+                                                                <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
+                                                                <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
+                                                            </form>
+                                                            <div class="alert">
+                                                                <button type="button" class="btn btn-porpule color-white full-width" id="btn-click-calc" data-bs-toggle="modal" data-bs-target="#calculaterModal">
+                                                                    Calculate
+                                                                </button>
+                                                            </div>
+                                                            <div class="flex-between alert">
+                                                                <div>1K Cut to IR:</div>
+                                                                <div>{% if cut_per_ir %}$ {{cut_per_ir}}{% else %}Not define{% endif %}</div>
+                                                            </div>
+    
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                             
-                                        </div>
-                    
                                     </div>
-                                </div>
+                    
+                            </div>
+                        </div>
                         {% endif %}
-                        <!-- Notifications -->
-                        <div class="tab-pane fade dashboard-detail" id="pills-notifications" role="tabpanel" aria-labelledby="pills-notifications-tab" tabindex="0">
-                            <div class="row">
-                                    <div class="col dashboard-detail-item">
-                                        <p class="center-icon-text">
-                                            <span class="material-symbols-outlined">
-                                                thread_unread
-                                                </span>&nbsp;Notifications
-                                        </p>
 
-                                        <div class="content">
-                                            <!-- Notifications -->
-                                            {% if notifications %}
-                                            {% for notification in notifications %}
-                                                <div class="alert alert-secondary from-top-15">
-                                                        <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
-                                                            notifications
-                                                            </span>{{notification.title}}</h6 class="font-bold">
-                                                        <p>{{notification.caption}}</p>
-                                                        <small><i>{{notification.created_at}}</i></small>
+
+                        <!-- Notifications -->
+                        <div class="tab-pane {% if tab == 'notifications' %}show active{% endif %} fade dashboard-detail" id="pills-notifications" role="tabpanel" aria-labelledby="pills-notifications-tab" tabindex="0">
+                            <div class="row">
+                                    <div class="col">
+                                            <div class="dashboard-detail-item">
+                                                    <!-- Unread notifications -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                thread_unread
+                                                                </span>&nbsp;Unreed Notifications
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="content">
+                                                                <!-- Invite Request -->
+                                                                {% if invite_request %}
+                                                                {% for i_r in invite_request %}
+                                                                    <div class="alert alert-dark from-top-15">
+                                                                            <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
+                                                                                notifications
+                                                                                </span>Join the team</h6 class="font-bold">
+                                                                            <div class="row">
+                                                                                <div class="col-sm-4"><p>Team {{i_r.team.name}} has invited you to their team</p></div>
+
+                                                                                <div class="col-sm-8">
+                                                                                    <form class="flex-end">
+                                                                                        <a href="{% url 'invite_member_response' i_r.team.id i_r.user.id 'Reject' %}" class="btn btn-danger color-white-important">Reject</a>
+                                                                                        <a href="{% url 'invite_member_response' i_r.team.id i_r.user.id 'Accept' %}" class="btn btn-primary color-white-important from-left-10">Accept</a>
+                                                                                    </form>
+                                                                                </div>
+                                                                            </div>
+                                                                    </div>
+                                                                {% endfor %}
+                                                                {% endif %}
+
+                                                                <!-- Notifications -->
+                                                                {% if notifications %}
+                                                                {% for notification in notifications %}
+                                                                    <div class="alert alert-secondary from-top-15">
+                                                                            <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
+                                                                                notifications
+                                                                                </span>{{notification.title}}</h6 class="font-bold">
+                                                                            <p>{{notification.caption}}</p>
+                                                                            <small><i>{{notification.created_at|date:"Y-m-d H:i"}}</i></small>
+                                                                    </div>
+                                                                {% endfor %}
+                                                                <a href="{% url 'seen_notifications' %}">Seen</a>
+                                                                {% else %}
+                                                                    <p class="min-height-200 min-width-100 center-r-c">There aren't new notifications</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                            </div>
+
+
+
+
+                                            <div class="dashboard-detail-item from-top-25">
+                                                <!-- Unread notifications -->
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                mark_email_read
+                                                            </span>&nbsp;History
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            {% endfor %}
-                                            <a href="{% url 'seen_notifications' %}">Seen</a>
-                                            {% else %}
-                                                <p class="min-height-200 center-r-c">There aren't new notifications</p>
-                                            {% endif %}
+
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="content">
+                                                            <!-- Notifications -->
+                                                            {% if notifications_history %}
+                                                            {% for notification in notifications_history %}
+                                                                <div class="alert alert-secondary from-top-15">
+                                                                        <h6 class="font-bold center-icon-text"><span class="material-symbols-outlined">
+                                                                            notifications
+                                                                            </span>{{notification.title}}</h6 class="font-bold">
+                                                                        <p>{{notification.caption}}</p>
+                                                                        <small><i>{{notification.created_at|date:"Y-m-d H:i"}}</i></small>
+                                                                </div>
+                                                            {% endfor %}
+                                                            {% else %}
+                                                                <p class="min-height-200 min-width-100 center-r-c">Nothing to show</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                         </div>
                                     </div>
                             </div>
@@ -626,5 +852,21 @@
                 </div>
 
             </div>
+
+
+            <div class="modal fade" id="calculaterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5" id="staticBackdropLabel">Wixana</h1>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div id="response-calculator"></div>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+
         </div>
-</div>
