@@ -242,3 +242,22 @@ class PaymentDebtTrackingCode(models.Model):
 class WixanaBankDetail(models.Model):
     card_number = models.CharField(max_length=16)
     card_name = models.CharField(max_length=30)
+
+class Ticket(models.Model):
+    TICKET_STATUS =(
+        ('ANSWERED', 'Answered'),
+        ('UNANSWERED', 'Unanswered'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=TICKET_STATUS, default='UNANSWERED')
+    title = models.CharField(max_length=64, blank=False, null=False)
+    text = models.CharField(max_length=555, blank=False, null=False)
+    created = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.title
+
+class TicketAnswer(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
+    description = models.CharField(max_length=555, blank=False, null=False)
+    created = models.DateTimeField(auto_now_add=True)

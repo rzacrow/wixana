@@ -64,6 +64,22 @@
                             {% endif %}
                         </button>
 
+
+                        <button class="nav-link center-icon-text color-white none-hover position-relative {% if tab == 'ticket' %}active{% endif %}" id="pills-ticket-tab" data-bs-toggle="pill" data-bs-target="#pills-ticket" type="button" role="tab" aria-controls="pills-ticket" aria-selected="false">
+                            <span class="material-symbols-outlined">
+                                mark_as_unread
+                                </span>&nbsp;Ticket
+                            {% if unseen_notif_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{unseen_notif_count}}
+                                <span class="visually-hidden">unread messages</span>
+                              </span>
+                            {% endif %}
+                        </button>
+
+
+
+
                         <a href="{%url 'logout' %}">
                         <button class="nav-link center-icon-text pink-hover" id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#v-pills-settings" type="button" role="tab" aria-controls="v-pills-settings" aria-selected="false">
                             <span class="material-symbols-outlined">
@@ -800,7 +816,7 @@
                                                         </div>
 
                                                         <div class="content">
-                                                            <div class="alert">
+                                                        <div class="alert">
                                                                 <form method="post" action="{% url 'loan_application' %}" onsubmit="return confirm('Do you really want to send the form?');">
                                                                     {% csrf_token %}
                                                                     <div class="mb-3">
@@ -816,7 +832,7 @@
                                                                     {{loan_form.as_div}}
                                                                     <input type="submit" value="submit" class="btn btn-porpule color-white-important">
                                                                 </form>
-                                                            </div>
+                                                            </div>    
                                                         </div>
                                                 </div>
                                             </div>
@@ -1036,6 +1052,92 @@
                                     </div>
                             </div>
                         </div>
+
+
+
+
+
+                        <!-- Ticket -->
+                        <div class="tab-pane {% if tab == 'ticket' %}show active{% endif %} fade dashboard-detail" id="pills-ticket" role="tabpanel" aria-labelledby="pills-ticket-tab" tabindex="0">
+                            <div class="row">
+                                    <div class="col">
+                                            <div class="dashboard-detail-item">
+                                                    <!-- Create Ticket -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    history_edu
+                                                                    </span>&nbsp;Create a ticket
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col">
+                                                            <div class="content">
+
+                                                                <div class="alert">
+                                                                    <form method="post" action="{% url 'submit_ticket' %}" onsubmit="return confirm('Do you really want to send the form?');">
+                                                                        {% csrf_token %}
+                                                                        {{ticket_form.as_div}}
+                                                                        <input type="submit" value="submit" class="btn btn-porpule color-white-important">
+                                                                    </form>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                            </div>
+
+                                            <div class="dashboard-detail-item from-top-25">
+                                                <!-- Tickets History -->
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <p class="center-icon-text">
+                                                            <span class="material-symbols-outlined">
+                                                                mark_email_read
+                                                            </span>&nbsp;History
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="content">
+                                                            <!-- Tickets -->
+                                                            {% if tickets_history %}
+                                                            {% for ticket in tickets_history %}
+                                                                <div class="alert alert-secondary from-top-15">
+                                                                        <h6 class="font-bold center-icon-text">{{ticket.title}}</h6 class="font-bold">
+                                                                        <hr>
+                                                                        <small class="badge bg-secondary">{{ticket.status|lower|title}}</small>
+                                                                        <p>{{ticket.text}}</p>
+                                                                        {% if tickets_answered %}
+                                                                            {% for answer in tickets_answered %}
+                                                                                {% if answer.ticket.id == ticket.id %}
+                                                                                    <p class="alert alert-warning from-top-15">Admin:<br>&nbsp;&nbsp; {{answer.description}}<p>
+                                                                                {% endif %}
+                                                                            {% endfor %}
+                                                                        {% endif %}
+                                                                        <small><i>{{ticket.created|date:"Y-m-d H:i"}}</i></small>
+                                                                </div>
+                                                            {% endfor %}
+                                                            {% else %}
+                                                                <p class="min-height-200 min-width-100 center-r-c">Nothing to show</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+
+
+
+
+
 
 
 

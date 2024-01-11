@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, WalletUpdateDetail, LoanApplication
+from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, WalletUpdateDetail, LoanApplication, SubmitTicket
 from .views import InviteUser, CheckPassword, ResetPassword, RemoveTeamMember, AskingMoney, ForgetPassword, InviteUserResponse, PositionMemberTeam, RemoveAlts, RemoveAltsResponse, DebtPaymentFromWallet
 
 
@@ -39,5 +39,11 @@ urlpatterns = [
     #Loan
     path('dashboard/loan/request/', LoanApplication.as_view(), name="loan_application"),
     path('dashboard/loan/paid/wallet/', DebtPaymentFromWallet.as_view(), name="payment_debt_from_wallet"),
+
+
+    #Send Ticket
+    path('dashboard/ticket/submit/', SubmitTicket.as_view(), name="submit_ticket"),
+
+
 
 ]

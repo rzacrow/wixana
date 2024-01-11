@@ -1,7 +1,7 @@
 from typing import Any
 from django.forms import ModelForm
 from django import forms
-from .models import User, Team, Wallet, Loan, Debt
+from .models import User, Team, Wallet, Loan, Debt, Ticket
 from django.core.exceptions import ValidationError
 
 class SignupForm(forms.Form):
@@ -179,4 +179,14 @@ class DebtForm(ModelForm):
     class Meta:
         model = Debt
         fields = ['debt_amount']
-        
+
+
+
+class TicketForm(ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ['title', 'text']
+
+        widgets = {
+            'text' : forms.Textarea(attrs={'placeholder': 'write your issue...', 'label': ""})
+        }

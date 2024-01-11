@@ -3,9 +3,10 @@ from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR,
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
-from accounts.models import Wallet, Transaction, Notifications, Team, TeamDetail
-from django.utils import timezone
+from accounts.models import Wallet, Transaction, Notifications, Team, TeamDetail, Realm, Alt as booster_alt
 
+from django.utils import timezone
+from django import forms
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.forms import UserCreationForm
@@ -87,12 +88,11 @@ class AttendanceDetailInline(TabularInline):
     model = AttendanceDetail
     extra = 2
 
-    readonly_fields = ['cut']
 
     fieldsets = (
         (None, {
             "fields": [
-                ('role', 'player'), 'missing_boss', 'cut'   
+                ('role', 'alt'), 'player', 'missing_boss', 'cut'   
             ],
         }),
     )
@@ -101,14 +101,20 @@ class CurrentRealmInline(TabularInline):
     model = CurrentRealm
     extra = 1
 
+
 @admin.register(Attendance)
 class AttendanceAdmin(ModelAdmin):
-
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(AttendanceAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name in ['run_notes', 'characters_name']:
+            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        return formfield
+    
     @admin.display(description="Date Created")
     def date_time_show(self, obj):
         return obj.date_time.strftime("%Y-%m-%d %H:%M")
 
-    list_display = ["date_time_show", 'status', 'total_pot']
+    list_display = ["date_time_show", 'status', 'run_notes', 'total_pot']
     list_filter = ['status', 'date_time']
 
     ordering = ('status', '-date_time')
@@ -123,7 +129,7 @@ class AttendanceAdmin(ModelAdmin):
     fieldsets = [(
             "Attendance",
             {
-                'fields' : [('date_time'), ('run_type', 'status'), ('total_pot', 'boss_kill'), 'run_notes']
+                'fields' : [('date_time'), ('run_type', 'status'), ('total_pot', 'boss_kill'), 'characters_name', 'run_notes']
             }
         )
     ]
@@ -200,9 +206,6 @@ class AttendanceAdmin(ModelAdmin):
             if not isinstance(inline, (CutDistributaionInline,GuildInline)) or obj is not None:
                 yield inline.get_formset(request, obj), inline
 
-
-
-
     def save_model(self, request, obj, form, change):
         try:
             a_rt = obj.run_type
@@ -224,6 +227,35 @@ class AttendanceAdmin(ModelAdmin):
             cutdist.save()
 
         finally:
+            try:
+                characters = obj.characters_name
+                if characters:
+                    characters = characters.split('\r\n')
+
+                    if characters:
+                            for car in characters:
+                                car = car.split(',')
+                                realm = Realm.objects.get(name=car[1])
+                                alt = booster_alt.objects.get(name=car[0], realm=realm)
+                                
+                                if alt.status == 'Verified':
+                                    is_alt_exist = AttendanceDetail.objects.filter(attendane=obj, player=alt.player, alt=alt)
+                                    if not is_alt_exist:
+                                        AttendanceDetail.objects.create(attendane=obj, player=alt.player, alt=alt)
+                else:
+                    a_d = AttendanceDetail.objects.filter(attendane=obj)
+                    if a_d:
+                        for ad in a_d:
+                            if ad.alt:
+                                ad.delete()
+            except:
+                    a_d = AttendanceDetail.objects.filter(attendane=obj)
+                    if a_d:
+                        for ad in a_d:
+                            if ad.alt:
+                                ad.delete()
+                    pass
+
             if obj.status == 'C':
                 if obj.paid_status == False:
                     boosters = AttendanceDetail.objects.filter(attendane=obj)

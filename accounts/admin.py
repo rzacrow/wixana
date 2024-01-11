@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group, Permission
-from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode
+from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
+from django import forms
 
 # Register your models here.
 from django.forms.models import BaseInlineFormSet
@@ -315,3 +316,41 @@ class WalletAdmin(ModelAdmin):
     
     list_display = ['player', 'card_number', 'card_full_name', 'balance_show']
     readonly_fields = ['player']
+
+
+class TicketAnswerInline(StackedInline):
+    model = TicketAnswer
+    extra = 1
+
+
+@admin.register(Ticket)
+class TicketAdmin(ModelAdmin):
+    @admin.display(description="Postage date")
+    def created_date(self, obj):
+        return obj.created.strftime("%Y-%m-%d %H:%M")
+    
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(TicketAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'text':
+            formfield.widget = forms.Textarea(attrs=formfield.widget.attrs)
+        return formfield
+    
+    inlines = [
+        TicketAnswerInline
+    ]
+    
+    list_display = ['user', 'title', 'created_date', 'status']
+    ordering = ['-created']
+
+    def save_model(self, request, obj, form, change):
+        try:
+            ticket = TicketAnswer.objects.filter(ticket=obj)
+            if ticket:
+                if ticket != '':
+                    obj.status = 'ANSWERED'
+                    obj.save()
+        except:
+            pass
+        super().save_model(request, obj, form, change)
+

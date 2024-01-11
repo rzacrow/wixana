@@ -9,10 +9,10 @@ from . import booster_dashboard
 from django.core.mail import send_mail
 from django.utils import timezone
 #forms
-from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm, TicketForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer
 from gamesplayed.models import CutInIR
 
 
@@ -280,6 +280,9 @@ class Dashboard(View):
             context['notifications'] = Notifications.objects.filter(send_to=request.user, status="U").order_by('-created_at')
             context['notifications_history'] = Notifications.objects.filter(send_to=request.user, status="S").order_by('-created_at')[0:10]
             context['invite_request'] = InviteMember.objects.filter(user=user)
+            context['ticket_form'] = TicketForm()
+            context['tickets_history'] = Ticket.objects.filter(user=user).order_by('-created')[0:10]
+            context['tickets_answered'] = TicketAnswer.objects.filter(ticket__user=user)
 
             
             context['is_superuser'] = is_superuser
@@ -910,3 +913,16 @@ class DebtPaymentFromWallet(View):
         except:
             messages.add_message(request, messages.WARNING, 'Your request is not valid')
             return redirect(reverse('dashboard') + '?tab=loan')      
+
+
+class SubmitTicket(View):
+    def post(self, request):
+        form = TicketForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            Ticket.objects.create(user=request.user, title=data['title'], text=data['text'])
+            messages.add_message(request, messages.SUCCESS, 'Ticket was sent successfully')
+            return redirect(reverse('dashboard') + '?tab=ticket')
+        else:
+            messages.add_message(request, messages.WARNING, 'Request is not valid')
+            return redirect(reverse('dashboard') + '?tab=ticket')

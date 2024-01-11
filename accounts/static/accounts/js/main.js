@@ -1,6 +1,8 @@
 var labels = document.getElementsByTagName('label');
 var inputs = document.getElementsByTagName('input');
 var selects = document.getElementsByTagName('select');
+var textarea = document.getElementsByTagName('textarea');
+
 var parent;
 var radioes = document.getElementsByName('response');
 
@@ -10,6 +12,15 @@ for (label of labels){
     parent = label.parentNode;
     parent.classList.add('mb-3');
 
+}
+
+for (input of textarea){
+    input.classList.add('form-control');
+    input.classList.add('color-white');
+    label = input.parentNode;
+    parent = label.parentNode;
+    laber.style.display = 'none';
+    parent.classList.add('mb-3');
 }
 
 

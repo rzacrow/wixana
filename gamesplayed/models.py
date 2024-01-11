@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User, Realm
+from accounts.models import User, Realm, Alt
 
 
 class RunType(models.Model):
@@ -14,12 +14,18 @@ class Attendance(models.Model):
         ('A', 'Active'),
         ('C', 'Closed')
     )
+    INPUT_MEMEBERS_TYPE_CHOICES = (
+        ('W', 'Website users'),
+        ('C', 'Character name'),
+    )
+
     date_time = models.DateTimeField(blank=False, null=False)
     run_type = models.ForeignKey(RunType, on_delete=models.PROTECT, blank=False, null=False)
     total_pot = models.IntegerField(blank=False, null=False)
     boss_kill = models.IntegerField(blank=False, null=False)
     run_notes = models.CharField(max_length=555, blank=True, null=True)
     status = models.CharField(max_length=1, choices=ATTENDANCE_CHOICES)
+    characters_name = models.CharField(max_length=1024, blank=True, null=True)
     paid_status = models.BooleanField(default=False)
 
     def __str__(self) -> str:
@@ -74,13 +80,23 @@ class Role(models.Model):
 class AttendanceDetail(models.Model):
     attendane = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, default=Role.get_default_role, null=True)
-    player = models.ForeignKey(User, on_delete=models.PROTECT)
+    player = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    alt = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True)
     missing_boss = models.IntegerField(default=0)
     multiplier = models.FloatField(default=1.0)
     cut = models.IntegerField(default=0)
 
     def __str__(self) -> str:
-        return self.player.username
+        try:
+            return self.alt.name
+        except:
+            try:
+                name = self.player.username
+                if self.player.nick_name:
+                    name = self.player.nick_name
+                return name
+            except:
+                return None
 
 
 class CutInIR(models.Model):
