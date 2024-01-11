@@ -1,4 +1,4 @@
-from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest
+from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest, Debt, Loan
 from gamesplayed.models import Attendance, CutInIR, AttendanceDetail
 from .forms import UpdateProfileForm, WalletForm
 from gamesplayed.models import CutInIR
@@ -19,6 +19,11 @@ def get_alts(pk) -> str:
     user = User.objects.get(id=pk)
     alts = Alt.objects.filter(player=user)
     Alt.objects.filter(player=user, status="Rejected").delete()
+    return alts
+
+def verified_alts(pk):
+    user = User.objects.get(id=pk)
+    alts = Alt.objects.filter(player=user, status="Verified")
     return alts
 
 def get_realms():
@@ -86,7 +91,7 @@ def wallet_report(pk):
 
     #wallet balance
     amount = float(wallet.amount)
-    if amount > 1000:
+    if amount >= 1000:
         amount = "{0} K".format(int(amount // 1000))
         
     todays_income = 0
@@ -146,3 +151,19 @@ def unseen_notif_badge(pk):
 def get_teams():
     teams = Team.objects.filter(status='Verified')
     return teams
+
+def get_debt(pk):
+    try:
+        user = User.objects.get(id=pk)
+        debts = Debt.objects.get(loan__user=user, paid_status='UnPaid')
+        return debts
+    except:
+        return None
+    
+def loan_history(pk):
+    try:
+        user = User.objects.get(id=pk)
+        loan_history = Loan.objects.filter(user=user).order_by('-created_at')[0:10]
+        return loan_history
+    except:
+        return None

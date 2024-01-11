@@ -1,7 +1,7 @@
 from typing import Any
 from django.forms import ModelForm
 from django import forms
-from .models import User, Team, Wallet
+from .models import User, Team, Wallet, Loan, Debt
 from django.core.exceptions import ValidationError
 
 class SignupForm(forms.Form):
@@ -168,3 +168,15 @@ class ForgetPasswordForm(forms.Form):
 
 class CheckPasswordForm(forms.Form):
     check_code = forms.CharField(max_length=6, required=True, strip=True, label='Confirm Code')
+
+
+class LoanForm(ModelForm):
+    class Meta:
+        model = Loan
+        fields = ['note', 'amount']
+
+class DebtForm(ModelForm):
+    class Meta:
+        model = Debt
+        fields = ['debt_amount']
+        

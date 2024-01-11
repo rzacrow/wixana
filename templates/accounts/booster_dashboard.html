@@ -594,6 +594,19 @@
                                                         <div class="content">
                                                             <form method="post" action="{% url 'asking_money' %}" onsubmit="return confirm('Do you really want to send the form?');">
                                                                 {% csrf_token %}
+
+                                                                <div class="mb-3">
+                                                                    <span class="help-block">Ignore it, if your payment method is it "IR"</span>
+                                                                    <select name='alt' id="alt">
+                                                                        <option value="0">Alts</option>
+                                                                        {% if verified_alts %}
+                                                                            {% for alt in verified_alts %}
+                                                                                <option value="{{alt.id}}">{{alt.name}},{{alt.realm.name}}</option>
+                                                                            {% endfor %}
+                                                                        {% endif %}
+                                                                    </select>
+                                                                </div>
+
                                                                 <label class="form-label">Amount</label>
                                                                 <input type="number" placeholder="amount in cut..." name="asking_money_amount">
 
@@ -768,49 +781,128 @@
                         <div class="tab-pane {% if tab == 'loan' %}show active{% endif %} fade dashboard-detail" id="pills-loan" role="tabpanel" aria-labelledby="pills-loan-tab" tabindex="0">
                             <div class="row">
                                     <div class="col">
-                                            <div class="dashboard-detail-item">
-                                                    <!-- Loan Application -->
+
+
+                                        <div class="row">
+                                            {% if not debts %}
+                                            <div class="col">
+                                                <div class="dashboard-detail-item">
+                                                        <!-- Loan Request -->
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <p class="center-icon-text">
+                                                                    <span class="material-symbols-outlined">
+                                                                        account_balance
+                                                                    </span>&nbsp;Get loan
+                                                                </p>
+                                                                <hr>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="content">
+                                                            <div class="alert">
+                                                                <form method="post" action="{% url 'loan_application' %}" onsubmit="return confirm('Do you really want to send the form?');">
+                                                                    {% csrf_token %}
+                                                                    <div class="mb-3">
+                                                                        <select name='alt'>
+                                                                            <option value="0">--- Your alts ---</option>
+                                                                            {% if verified_alts %}
+                                                                                {% for alt in verified_alts %}
+                                                                                    <option value="{{alt.id}}">{{alt.name}},{{alt.realm.name}}</option>
+                                                                                {% endfor %}
+                                                                            {% endif %}
+                                                                        </select>
+                                                                    </div>
+                                                                    {{loan_form.as_div}}
+                                                                    <input type="submit" value="submit" class="btn btn-porpule color-white-important">
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                </div>
+                                            </div>
+
+
+                                            {% else %}
+                                            <div class="col-md-6">
+                                                <div class="dashboard-detail-item">
+                                                    <!-- Debt -->
                                                     <div class="row">
                                                         <div class="col-12">
                                                             <p class="center-icon-text">
                                                                 <span class="material-symbols-outlined">
-                                                                    account_balance
-                                                                </span>&nbsp;Get loan
+                                                                    add_chart
+                                                                </span>&nbsp;Debt
+                                                            </p>
+                                                            <hr>
+                                                        </div>
+
+                                                        <div class="content">
+                                                                    <div class="alert alert-dark flex-between">
+                                                                        <div>Date received:</div>
+                                                                        <div>{% if debts %}{{debts.loan.created_at|date:"Y-m-d H:i"}}{% else %}#-#-# *:*{% endif %}</div>
+                                                                    </div>
+
+                                                                    <div class="alert alert-dark flex-between">
+                                                                        <div>Alt:</div>
+                                                                        <div>{% if debts %}{{debts.loan.alt}}{% else %}{% endif %}</div>
+                                                                    </div>
+
+
+                                                                    <div class="alert alert-warning flex-between">
+                                                                        <div>Amount:</div>
+                                                                        <div>{% if debts %}{{debts.debt_amount}} K{% else %}0{% endif %}</div>
+                                                                    </div>
+                                                                    
+                                                                    <button type="button" class="btn btn-porpule color-white full-width center-icon-text" id="btn-payment-loan" data-bs-toggle="modal" data-bs-target="#paymentLoan">
+                                                                        <img src="{% static 'accounts/images/wallet.png' %}" class="img-icon">&nbsp;Payment the debt
+                                                                    </button>                                                                  
+                                                        </div>
+
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+
+                                            <div class="col-md-6">
+                                                <div class="dashboard-detail-item">
+                                                    <!-- History -->
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <p class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    real_estate_agent
+                                                                </span>&nbsp;Loans taken
                                                             </p>
                                                         </div>
-                                                    </div>
-                                            </div>
 
-
-
-
-                                            <div class="dashboard-detail-item from-top-25">
-                                                <!-- Debt -->
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <p class="center-icon-text">
-                                                            <span class="material-symbols-outlined">
-                                                                add_chart
-                                                            </span>&nbsp;Debt
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="dashboard-detail-item from-top-25">
-                                                <!-- History -->
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <p class="center-icon-text">
-                                                            <span class="material-symbols-outlined">
-                                                                real_estate_agent
-                                                            </span>&nbsp;Loans taken
-                                                        </p>
+                                                        <div class="content">
+                                                            {% if loan_history %}
+                                                                <table class="table">
+                                                                    <thead class="table-light">
+                                                                        <th>Request Date</th>
+                                                                        <th>Loan Amount</th>
+                                                                        <th>Status</th>
+                                                                    </thead>
+                                                                {% for lh in loan_history %}
+                                                                    <tr>
+                                                                        <td class="bg-transparent color-white-important">
+                                                                            {{lh.created_at|date:"Y-m-d H:i"}}
+                                                                        </td>
+                                                                        <td class="bg-transparent color-white-important">{{lh.amount}} K</td>
+                                                                        <td class="bg-transparent color-white-important">{{lh.loan_status}}</td>
+                                                                    </tr>
+                                                                {% endfor %}
+                                                                </table>
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
+
+                                        </div>
                                     </div>
                             </div>
                         </div>
@@ -952,7 +1044,7 @@
 
             </div>
 
-            <!-- Exchange mony calculator -->
+            <!-- Exchange mony calculator Modal -->
             <div class="modal fade" id="calculaterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
@@ -967,5 +1059,115 @@
                 </div>
             </div>
 
+            <!-- Payment debt Modal -->
+            <div class="modal fade" id="paymentLoan" aria-hidden="true" aria-labelledby="paymentLoanLabel" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="paymentLoanLabel">WIXANA</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h6>Payment method:</h6>
+                            <div class="row">
+                                <div class="col-12"><button class="btn btn-porpule color-white-important from-top-15 full-width" data-bs-target="#paymentLoanWallet" data-bs-toggle="modal"><img src="{% static 'accounts/images/wallet2.png' %}" class="img-icon">&nbsp;Payment via wallet</button></div>
+                                <div class="col-12"><button class="btn btn-porpule color-white-important from-top-15 full-width" data-bs-target="#paymentLoanTrackingCode" data-bs-toggle="modal" id="btn-tracking-code"><img src="{% static 'accounts/images/card.png' %}" class="img-icon">&nbsp;Payment via tracking code</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paid from wallet -->
+              <div class="modal fade" id="paymentLoanWallet" aria-hidden="true" aria-labelledby="paymentLoanWalletLabel" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="paymentLoanWalletLabel">WIXANA</h1>
+                        </div>
+                        <div class="modal-body">
+                            <h6>Your debt: {% if debts %}<span id="debt_in_cut">{{debts.debt_amount}}</span> K{% else %}0{% endif %}</h6>
+                            <h6>Your balance: {% if wallet_report %}{{wallet_report.amount}}{% else %}Not define{% endif %}</h6>
+
+                            <form method="post" action="{% url 'payment_debt_from_wallet' %}?method=wallet" class="from-top-15">
+                                {% csrf_token %}
+                                <input type="hidden" value="{{debts.id}}" name="debt_id">
+                                <div class="mb-3">
+                                    <input type="submit" value="Pay" class="btn btn-porpule color-white-important">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <a href="{% url 'dashboard' %}?tab=loan" class="btn btn-outline-dark dark-link">Back to dashboard</a>
+                        </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment via tracking code-->
+              <div class="modal fade" id="paymentLoanTrackingCode" aria-hidden="true" aria-labelledby="paymentLoanTrackingCodeLabel" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="paymentLoanTrackingCodeLabel">WIXANA</h1>
+                        </div>
+                        <div class="modal-body">
+                            <h6>Your debt: {% if debts %}<span id="debt_in_cut">{{debts.debt_amount}}</span> K{% else %}0{% endif %}</h6>
+                            <h6>Your debt to IR: <span id="debt_to_ir"></span> T</h6>
+                            <hr>
+                            <small>Please transfer the above amount in Tomans to the following card number. Then enter your deposit tracking code in the box below.</small>
+                            
+                            {% if wixana_card_detail %}
+                                <div class="alert alert-dark from-top-15">
+                                    <small class="flex-between">Card number: {{wixana_card_detail.card_number}}</small>
+                                    <small class="flex-between">Card name: {{wixana_card_detail.card_name}}</small>
+                                </div>
+                                <form method="post" action="{% url 'payment_debt_from_wallet' %}?method=tracking_code" class="from-top-15">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <input type="text" placeholder="Tracking code..." name="tracking_code">
+                                    </div>
+                                    <input type="hidden" id="debt-in-ir" name="debt_in_ir">
+                                    <input type="hidden" value="{{debts.id}}" name="debt_id">
+                                    <div class="mb-3">
+                                        <input type="submit" value="submit" class="btn btn-porpule color-white-important">
+                                    </div>
+                                </form>
+                            {% else %}
+                                <small>Admin's bank card information has not been registered</small>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <a href="{% url 'dashboard' %}?tab=loan" class="btn btn-outline-dark dark-link">Back to dashboard</a>
+                        </div>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+                function waitForLoad2(id, callback){
+                    var timer = setInterval(function(){
+                        if(document.getElementById('btn-click-calc')){
+                            clearInterval(timer);
+                            callback();
+                        }
+                    }, 100);
+                }
+                
+                
+                waitForLoad2("subm", function(){
+                    document.getElementById("btn-tracking-code").onclick = function()
+                    {
+                        var debt = {{debts.debt_amount}};
+                        {% if cut_per_ir %}
+                        document.getElementById('debt_to_ir').innerText = debt * {{cut_per_ir}};
+                        document.getElementById('debt-in-ir').value = debt * {{cut_per_ir}};
+                        {% else %}
+                        document.getElementById('debt_to_ir').innerText = "No amount has been entered for conversion by admin";
+                        document.getElementById('debt-in-ir').value = 0;
+                        {% endif %}
+                    }
+                });
+              </script>
 
         </div>

@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import User
+from accounts.models import User, Realm
 
 
 class RunType(models.Model):
@@ -25,7 +25,13 @@ class Attendance(models.Model):
     def __str__(self) -> str:
         return str(self.date_time)
     
+class CurrentRealm(models.Model):
+    attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE)
+    realm = models.ForeignKey(Realm, on_delete=models.CASCADE, blank=True, null=True)
+    amount = models.IntegerField(blank=True, null=True)
 
+    def __str__(self) -> str:
+        return f"{str(self.attendance.id)} - {self.realm.name} -> {self.amount}"
 
 class Guild(models.Model):
     attendance = models.OneToOneField(Attendance, on_delete=models.CASCADE, default=None)

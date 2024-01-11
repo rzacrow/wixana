@@ -48,8 +48,8 @@ a:hover, .nav-link:hover{
 .color-white-important:hover{
     color: #f8f8f8 !important;
 }
-.dark-link{
-    text-decoration: none; color: #161616;
+.dark-link:hover{
+    text-decoration: none; color: #f8f8f8 !important;
 }
 
 .pink-link{
@@ -456,7 +456,7 @@ footer{
     backdrop-filter: blur(15px);
     margin-left: 15px;
     padding: 15px;
-    max-height: 470px !important;
+    max-height: 550px !important;
     min-height: 400px;
     overflow-y: scroll;
 }

@@ -9,10 +9,10 @@ from . import booster_dashboard
 from django.core.mail import send_mail
 from django.utils import timezone
 #forms
-from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode
 from gamesplayed.models import CutInIR
 
 
@@ -262,6 +262,17 @@ class Dashboard(View):
                 context['transactions'] = booster_dashboard.transactions(pk=user.id)
                 context['unseen_notif_count'] = booster_dashboard.unseen_notif_badge(pk=user.id)
                 context['teams'] = booster_dashboard.get_teams()
+
+                context['verified_alts'] = booster_dashboard.verified_alts(pk=user.id)
+                context['loan_form'] = LoanForm()
+                context['debt_form'] = DebtForm()
+                context['loan_history'] = booster_dashboard.loan_history(pk=user.id)
+                context['debts'] = booster_dashboard.get_debt(pk=user.id)
+                try:
+                    context['wixana_card_detail'] = WixanaBankDetail.objects.last()
+                except:
+                    context['wixana_card_detail'] = None
+
             else:
                 is_user = True
                 context['is_user'] = is_user
@@ -536,13 +547,22 @@ class AskingMoney(View):
                                 cut_in_ir = CutInIR.objects.last()
                                 cut_in_ir = int(cut_in_ir.amount)
                             except:
-                                Transaction.objects.create(requester=user, amount=amount, currency=currency, caption="there was a problem to convert the rate, the amount mentioned is in Cut")
+                                Transaction.objects.create(requester=user, amount=amount, currency=currency, caption="there was a problem to convert the rate, the amount mentioned is in Cut", card_detail=wallet)
                             else:
-                                amount = amount * cut_in_ir
-                                Transaction.objects.create(requester=user, amount=amount, currency=currency)
+                                amount_in_ir = amount * cut_in_ir
+                                Transaction.objects.create(requester=user, amount=amount_in_ir, currency=currency, caption=f"Cut: {amount} K", card_detail=wallet)
                             messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
-                        else:        
-                            Transaction.objects.create(requester=user, amount=amount, currency=currency)
+                        else:
+                            try:
+                                alt_id = request.POST['alt']  
+                                alt = Alt.objects.get(id=alt_id)
+                            except:
+                                wallet.amount += (amount * 1000)
+                                wallet.save()
+                                messages.add_message(request, messages.WARNING, 'Alt is not valid')
+                                return redirect(reverse('dashboard') + '?tab=wallet')
+
+                            Transaction.objects.create(requester=user, amount=amount, currency=currency, alt=alt)
                             messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
                         admins = User.objects.filter(user_type__in=['A', 'O'])
                         for admin in admins:
@@ -553,7 +573,7 @@ class AskingMoney(View):
                 else:
                     messages.add_message(request, messages.WARNING, 'Your wallet balance is not enough')
             
-        return redirect('dashboard')
+        return redirect(reverse('dashboard') + '?tab=wallet')
     
 
 
@@ -796,3 +816,97 @@ class RemoveAltsResponse(View):
         else:
             messages.add_message(request, messages.ERROR, 'Your request is not valid')
             return redirect(reverse('dashboard') + '?tab=notifications')
+
+
+
+
+class LoanApplication(View):
+    def post(self, request):
+        debts = Debt.objects.filter(loan__user=request.user, paid_status='Unpaid')
+        loans = Loan.objects.filter(user=request.user, loan_status='Pending')
+        #if user have an unpaid loan
+        if debts:
+            messages.add_message(request, messages.WARNING, 'You have an unpaid loan')
+            return redirect(reverse('dashboard') + '?tab=loan')
+                
+        if loans:
+            messages.add_message(request, messages.WARNING, 'You have an unchecked loan request')
+            return redirect(reverse('dashboard') + '?tab=loan')        
+         
+        
+
+        form = LoanForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            try:
+                alt = Alt.objects.get(id=form.data['alt'])
+                note = data['note']
+                
+                Loan.objects.create(alt=alt, note=note, amount=data['amount'], user=request.user)
+                messages.add_message(request, messages.SUCCESS, 'Your request for a loan has been registered')
+                admins = User.objects.filter(user_type='O')
+                requester_name = request.user.username
+                if request.user.nick_name:
+                    requester_name = request.user.nick_name
+
+                for admin in admins:
+                    Notifications.objects.create(send_to=admin, title='New Loan Request', caption=f"You have a new loan request with the amount of {data['amount']} K from user {requester_name}")
+                return redirect(reverse('dashboard') + '?tab=loan')
+            except:
+                messages.add_message(request, messages.WARNING, 'Your request is not valid')
+                return redirect(reverse('dashboard') + '?tab=loan')
+        else:
+            messages.add_message(request, messages.WARNING, 'Your request is not valid')
+            return redirect(reverse('dashboard') + '?tab=loan')
+
+
+
+
+class DebtPaymentFromWallet(View):
+    def post(self, request):
+        try:
+            method = request.GET['method']
+            if method == 'wallet':
+                debt = Debt.objects.get(id=request.POST['debt_id'])
+                amount = debt.debt_amount * 1000
+                wallet = Wallet.objects.get(player=debt.loan.user)
+
+                #if wallet balance is insufficient
+                if amount > wallet.amount:
+                    messages.add_message(request, messages.WARNING, 'Your account balance is insufficient')
+                    return redirect(reverse('dashboard') + '?tab=loan')
+                
+                debt.paid_status = 'Paid'
+                debt.debt_amount = 0
+                debt.save()
+                wallet.amount -= amount
+                wallet.save()
+                Notifications.objects.create(send_to=debt.loan.user, title="Payment receipts", caption="Your debt has been settled")
+                admins = User.objects.filter(user_type='O')
+                name = debt.loan.user.username
+                if debt.loan.user.nick_name:
+                    name = debt.loan.user.nick_name
+                for admin in admins:
+                    Notifications.objects.create(send_to=admin, title='Debt deposit', caption=f"User {name} paid debt with {amount // 1000} K amount via wallet")
+                return redirect(reverse('dashboard') + '?tab=loan')
+            
+
+            elif method == 'tracking_code':
+                amount = request.POST['debt_in_ir']
+                debt = Debt.objects.get(id=request.POST['debt_id'])
+                tracking_code = request.POST['tracking_code']
+
+                #if tracking code is not valid
+                if (tracking_code == None) or (len(tracking_code) < 1) or (not tracking_code.isdigit()):
+                    messages.add_message(request, messages.WARNING, 'Your request is not valid')
+                    return redirect(reverse('dashboard') + '?tab=loan')
+                                
+                PaymentDebtTrackingCode.objects.create(debt_amount_IR=amount, debt=debt, tracking_code=tracking_code)
+                messages.add_message(request, messages.SUCCESS, 'Your request has been registered. After checking the admin, the result will be announced')
+                admins = User.objects.filter(user_type='O')
+                for admin in admins:
+                    Notifications.objects.create(send_to=admin, title='Debt deposit', caption="You have an unchecked payment via tracking code. See it from the admin panel")
+                return redirect(reverse('dashboard') + '?tab=loan')
+        except:
+            messages.add_message(request, messages.WARNING, 'Your request is not valid')
+            return redirect(reverse('dashboard') + '?tab=loan')      

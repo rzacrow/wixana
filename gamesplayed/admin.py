@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR, CutDistributaion
+from .models import Attendance, AttendanceDetail, Role, RunType, Guild, CutInIR, CutDistributaion, CurrentRealm
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
@@ -29,18 +29,26 @@ class GuildInline(StackedInline):
         obj.save()
         super().save_model(request, obj, form, change)
 
+
+
 @admin.register(Transaction)
 class TransactionAdmin(ModelAdmin):
     @admin.display(description="Date Time")
     def created_show(self, obj):
         return obj.created.strftime("%Y-%m-%d %H:%M")
     
-    list_display = ['requester', 'status', 'created_show', 'currency', 'amount']
+    @admin.display(description="User")
+    def user_requester(self, obj):
+        if obj.alt:
+            return obj.alt
+        return obj.requester
+    
+    list_display = ['user_requester', 'status', 'created_show', 'currency', 'amount']
     readonly_fields = ['created_show']
     fieldsets = [(
             None,
             {
-                'fields' : [('requester', 'created_show'), ('currency', 'amount'), ('status', 'caption'), 'paid_date']
+                'fields' : [('requester', 'created_show'), ('currency', 'amount'), ('status', 'caption'), ('card_detail', 'alt'), 'paid_date']
             }
         )
     ]
@@ -52,6 +60,14 @@ class TransactionAdmin(ModelAdmin):
 
     list_filter_submit = True
     list_filter = ['status', 'created']
+
+    @admin.action(description="Change selected transactions status to 'Paid'")
+    def change_to_paid(self, request, queryset):
+        queryset.update(status='PAID')
+
+    actions = ['change_to_paid']
+
+
 
     def save_model(self, request, obj, form, change):
         if 'status' in form.changed_data:
@@ -81,7 +97,10 @@ class AttendanceDetailInline(TabularInline):
         }),
     )
 
-    
+class CurrentRealmInline(TabularInline):
+    model = CurrentRealm
+    extra = 1
+
 @admin.register(Attendance)
 class AttendanceAdmin(ModelAdmin):
 
@@ -98,6 +117,7 @@ class AttendanceAdmin(ModelAdmin):
         CutDistributaionInline,
         GuildInline,
         AttendanceDetailInline,
+        CurrentRealmInline,
     ]
 
     fieldsets = [(

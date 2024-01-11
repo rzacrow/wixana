@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+from django.utils import timezone
 class User(AbstractUser):
     def generate_unique_path(self, filename):
         return f"profile/{self.username}/{filename}"
@@ -73,7 +73,10 @@ class Alt(models.Model):
     status = models.CharField(max_length=8, choices=ALT_STATUS_CHOICES, default='Awaiting')
     realm = models.ForeignKey(Realm, on_delete=models.PROTECT)
     def __str__(self) -> str:
-        return f"{self.player.username} | {self.name}"
+        name = self.player.username
+        if self.player.nick_name:
+            name = self.player.nick_name
+        return f"{name} | {self.name},{self.realm.name}"
 
 
 class RemoveAltRequest(models.Model):
@@ -175,6 +178,8 @@ class Transaction(models.Model):
     paid_date = models.DateTimeField(blank=True, null=True)
     amount = models.IntegerField(default=0)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='CUT')
+    alt = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True)
+    card_detail = models.ForeignKey(Wallet, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.id)
@@ -192,8 +197,48 @@ class Loan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     alt = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)
+    loan_status = models.CharField(max_length=7, default='Pending', choices=LOAN_STAUTS)
+
+    def __str__(self) -> str:
+        name = self.user.username
+        if self.user.nick_name:
+            name = self.user.nick_name
+        return f"{name}|{self.loan_status}"
 
 
 class Debt(models.Model):
+    DEBT_PAID_STATUS = (
+        ('UnPaid','UnPaid'),
+        ('Paid','Paid')
+    )
+
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE)
     debt_amount = models.IntegerField()
+    paid_status = models.CharField(max_length=6, choices=DEBT_PAID_STATUS, default='UnPaid')
+
+    def __str__(self) -> str:
+        name = self.loan.user.username
+        if self.loan.user.nick_name:
+            name = self.loan.user.nick_name
+        return f"{name} | cut: {str(self.debt_amount)} K"
+
+
+class PaymentDebtTrackingCode(models.Model):
+    PAYMENT_DEBT_VIA_TRACKING_CODE_STATUS = (
+        ('Pending', 'Pending'),
+        ('Rejected', 'Rejected'),
+        ('Accepted', 'Accepted')
+    )
+
+    debt = models.ForeignKey(Debt, on_delete=models.CASCADE)
+    tracking_code = models.CharField(max_length=50, null=False, blank=False, unique=True)
+    payment_debt_status = models.CharField(choices=PAYMENT_DEBT_VIA_TRACKING_CODE_STATUS, max_length=8, default='Pending')
+    debt_amount_IR = models.IntegerField()
+    created = models.DateTimeField(default=timezone.datetime.now())
+
+    def __str__(self) -> str:
+        return self.tracking_code
+
+class WixanaBankDetail(models.Model):
+    card_number = models.CharField(max_length=16)
+    card_name = models.CharField(max_length=30)

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group, Permission
-from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications
+from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -213,8 +213,100 @@ class TeamAdmin(ModelAdmin):
             Notifications.objects.create(send_to=leader.player, title="Your team has been deleted by the admin")
 
 
+@admin.register(Loan)
+class Loan(ModelAdmin):
+    list_display = ['user', 'alt', 'loan_status','amount']
+    ordering = ['-created_at']
+
+    list_filter = ['loan_status', 'created_at']
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'loan_status' in form.changed_data:
+            if obj.loan_status == 'Reject':
+                Notifications.objects.create(send_to=obj.user, title="Loan request", caption="Your loan request was rejected by the admin")
+                obj.loan_status = 'Reject'
+                obj.save()
+
+            if obj.loan_status == 'Accept':
+                Notifications.objects.create(send_to=obj.user, title="Loan request", caption="Your loan request was Accepted by the admin")
+                obj.loan_status = 'Accept'
+                obj.save()
+                Debt.objects.create(loan=obj, debt_amount=obj.amount, paid_status='UnPaid')
+                
+
+
+@admin.register(WixanaBankDetail)
+class WixanaBankDetailAdmin(ModelAdmin):
+    list_display = ['card_name', 'card_number']
+
+
+@admin.register(PaymentDebtTrackingCode)
+class PaymentDebtTrackingCodeAdmin(ModelAdmin):
+    def changeform_view(self, request, obj, form, change):
+        if request.user.user_type != 'O':
+            raise PermissionDenied()
+        return super().changeform_view(request, obj, form, change)
+
+    @admin.display(description="User")
+    def username(self, obj):
+        name = obj.debt.loan.user.username
+        if obj.debt.loan.user.nick_name:
+            name = obj.debt.loan.user.nick_name
+        return name
+    
+    @admin.display(description='Status')
+    def status(self, obj):
+        return obj.payment_debt_status
+    
+    @admin.display(description='Amount in IR')
+    def amount_in_ir(self, obj):
+        return obj.debt_amount_IR
+    list_display = ['username','tracking_code', 'status', 'amount_in_ir']
+    ordering = ['-created']
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'payment_debt_status' in form.changed_data:
+            if obj.payment_debt_status == 'Accepted':
+                Notifications.objects.create(send_to=obj.debt.loan.user, title="Payment receipts", caption="Your payment receipt was Accepted by the admin, Your debt has been settled")
+                debt = Debt.objects.get(id=obj.debt.id)
+                debt.paid_status = 'Paid'
+                debt.debt_amount = 0
+                debt.save()
+
+            elif obj.payment_debt_status == 'Rejected':
+                Notifications.objects.create(send_to=obj.debt.loan.user, title="Payment receipts", caption="Your payment receipt was rejected by the admin")
+
+
+
+@admin.register(Debt)
+class DebtAdmin(ModelAdmin):
+    def changeform_view(self, request, obj, form, change):
+        if request.user.user_type != 'O':
+            raise PermissionDenied()
+        return super().changeform_view(request, obj, form, change)
+    
+
+
+    @admin.display(description="User")
+    def username(self, obj):
+        name = obj.loan.user.username
+        if obj.loan.user.nick_name:
+            name = obj.loan.user.nick_name
+        return name
+    
+    list_display = ['username', 'debt_amount', 'paid_status']
+
+
+
 @admin.register(Wallet)
 class WalletAdmin(ModelAdmin):
+    def changeform_view(self, request, obj, form, change):
+        if request.user.user_type != 'O':
+            raise PermissionDenied()
+        return super().changeform_view(request, obj, form, change)
+    
     @admin.display(description="Balance")
     def balance_show(self, obj):
         if obj.amount >= 1000:
