@@ -5,18 +5,22 @@ from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
 from unfold.forms import UserCreationForm
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import GroupAdmin as gAdmin,UserAdmin as BaseUserAdmin
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django import forms
 
-# Register your models here.
-from django.forms.models import BaseInlineFormSet
-
 
 admin.site.unregister(Group)
+
+@admin.register(Group)
+class GroupAdmin(gAdmin,ModelAdmin):
+    list_display = ['name']
+
+
+    
 @admin.register(Realm)
 class Realm(ModelAdmin):
     # Preprocess content of readonly fields before render
@@ -130,7 +134,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         (
             "User info",
             {
-                'fields' : [('username', 'user_type'), ('nick_name', 'phone'), 'national_code', 'avatar', ('email', 'discord_id'), ('last_login', 'date_joined'), ]
+                'fields' : [('username', 'user_type'), ('nick_name', 'phone'), 'national_code', 'avatar', ('email', 'discord_id'), 'groups', 'is_staff', ('last_login', 'date_joined'), ]
             }
         )
     ]
