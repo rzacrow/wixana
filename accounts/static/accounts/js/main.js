@@ -2,16 +2,14 @@ var labels = document.getElementsByTagName('label');
 var inputs = document.getElementsByTagName('input');
 var selects = document.getElementsByTagName('select');
 var textarea = document.getElementsByTagName('textarea');
-
-var parent;
 var radioes = document.getElementsByName('response');
+var parent = 0;
 
 for (label of labels){
     label.classList.add('form-label');
     label.classList.add('color-white');
     parent = label.parentNode;
     parent.classList.add('mb-3');
-
 }
 
 for (input of textarea){
@@ -19,7 +17,6 @@ for (input of textarea){
     input.classList.add('color-white');
     label = input.parentNode;
     parent = label.parentNode;
-    laber.style.display = 'none';
     parent.classList.add('mb-3');
 }
 
@@ -71,11 +68,15 @@ waitForLoad("subm", function(){
 
 function btn_dropdown(id){
     let ids = id;
-    console.log("dropdown-menu-" + ids);
     let drop_down = document.getElementById("dropdown-menu-" + ids);
-    if (drop_down.style.display != 'block'){
+    if (drop_down.style.display != 'block')
+    {
         drop_down.style.display = "block";
-    }else{
+    }
+    else
+    {
         drop_down.style.display = "none";
     }
 }
+
+

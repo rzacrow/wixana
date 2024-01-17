@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group, Permission
-from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer
+from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer, CardDetail
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -33,8 +33,6 @@ class Realm(ModelAdmin):
 
 class WalletInline(StackedInline):
     model = Wallet
-
-    readonly_fields = ['card_number', 'IR', 'card_full_name']
     # Preprocess content of readonly fields before render
     readonly_preprocess_fields = {
         "model_field_name": "html.unescape",
@@ -121,7 +119,10 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     @admin.display(description="Lost Login")
     def lost_login_show(self, obj):
-        return obj.last_login.strftime("%Y-%m-%d %H:%M")
+        try:
+            return obj.last_login.strftime("%Y-%m-%d %H:%M")
+        except:
+            return None
     
     list_display = ['nick_name', 'username', 'user_type', 'lost_login_show']
     list_display_links = ['nick_name', 'username']
@@ -166,6 +167,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     def change_user_to_booster(self, request, queryset):
         queryset.update(user_type="B")
 
+
     def get_ordering(self, request):
         return ["username"]
     
@@ -174,7 +176,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
             try:
                 get_wallet = Wallet.objects.get(player__username=obj.username)
             except:
-                Wallet.objects.create(player=obj, card_full_name='---')
+                Wallet.objects.create(player=obj)
         if 'user_type' in form.changed_data:
             if request.user.user_type == 'O':
                 if obj.user_type == 'A':
@@ -205,6 +207,13 @@ class TeamAdmin(ModelAdmin):
     inlines = [
         TeamDetailInline
     ]
+    @admin.action(description="Change status to 'Verified'")
+    def change_status_verified(self, request, queryset):
+        queryset.update(status="Verified")
+
+    actions = [
+        'change_status_verified'
+    ]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -220,6 +229,19 @@ class Loan(ModelAdmin):
     ordering = ['-created_at']
 
     list_filter = ['loan_status', 'created_at']
+
+    @admin.action(description="Change status to 'Accept'")
+    def change_status_accept(self, request, queryset):
+        queryset.update(loan_status="Accept")
+
+    @admin.action(description="Change status to 'Reject'")
+    def change_status_reject(self, request, queryset):
+        queryset.update(loan_status="Reject")
+
+    actions = [
+        'change_status_reject',
+        'change_status_accept'
+    ]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -266,6 +288,22 @@ class PaymentDebtTrackingCodeAdmin(ModelAdmin):
     list_display = ['username','tracking_code', 'status', 'amount_in_ir']
     ordering = ['-created']
 
+
+
+    @admin.action(description="Change status to 'Accepted'")
+    def change_status_accept(self, request, queryset):
+        queryset.update(payment_debt_status="Accepted")
+
+    @admin.action(description="Change status to 'Rejected'")
+    def change_status_reject(self, request, queryset):
+        queryset.update(payment_debt_status="Rejected")
+
+    actions = [
+        'change_status_reject',
+        'change_status_accept'
+    ]
+
+
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if 'payment_debt_status' in form.changed_data:
@@ -299,7 +337,8 @@ class DebtAdmin(ModelAdmin):
     
     list_display = ['username', 'debt_amount', 'paid_status']
 
-
+class CardDetailInline(TabularInline):
+    model = CardDetail
 
 @admin.register(Wallet)
 class WalletAdmin(ModelAdmin):
@@ -314,8 +353,12 @@ class WalletAdmin(ModelAdmin):
             return "{0} K".format(obj.amount // 1000)
         return obj.amount
     
-    list_display = ['player', 'card_number', 'card_full_name', 'balance_show']
+    list_display = ['player', 'balance_show']
     readonly_fields = ['player']
+
+    inlines = [
+        CardDetailInline
+    ]
 
 
 class TicketAnswerInline(StackedInline):
@@ -343,6 +386,13 @@ class TicketAdmin(ModelAdmin):
     list_display = ['user', 'title', 'created_date', 'status']
     ordering = ['-created']
 
+    @admin.action(description="Change status to 'Answered'")
+    def change_status_answered(self, request, queryset):
+        queryset.update(status="ANSWERED")
+
+    actions = [
+        'change_status_answered',
+    ]
     def save_model(self, request, obj, form, change):
         try:
             ticket = TicketAnswer.objects.filter(ticket=obj)

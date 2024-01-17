@@ -1,6 +1,6 @@
-from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest, Debt, Loan
+from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest, Debt, Loan, CardDetail
 from gamesplayed.models import Attendance, CutInIR, AttendanceDetail
-from .forms import UpdateProfileForm, WalletForm
+from .forms import UpdateProfileForm, CardDetailForm
 from gamesplayed.models import CutInIR
 from django.db.models import Sum
 from django.utils import timezone
@@ -69,18 +69,20 @@ def get_team(pk):
 #Get All of attendance
 def get_matches(pk):
     user = User.objects.get(id=pk)
-    active_attendance = AttendanceDetail.objects.filter(player=user, attendane__status='A').order_by('-attendane__date_time')[0:10]
-    closed_attendance = AttendanceDetail.objects.filter(player=user, attendane__status='C').order_by('-attendane__date_time')[0:10]
+    active_attendance = AttendanceDetail.objects.filter(player=user, attendane__cycle__status='O').order_by('-attendane__date_time')[0:10]
+    closed_attendance = AttendanceDetail.objects.filter(player=user, attendane__cycle__status='C').order_by('-attendane__date_time')[0:10]
     return {'active_cycle' : active_attendance, 'closed_cycle' : closed_attendance}
 
 
 
-def get_wallet(pk):
+def get_card_and_card_form(pk):
     player = User.objects.get(id=pk)
     wallet = Wallet.objects.get_or_create(player=player)
     wallet = wallet[0]
-    wallet = WalletForm(initial={'card_number' : wallet.card_number, 'IR' : wallet.IR, 'card_full_name' : wallet.card_full_name})
-    return wallet
+    cards = CardDetail.objects.filter(wallet=wallet)
+    print(cards)
+    card_form = CardDetailForm()
+    return {'cards': cards, 'card_form':card_form}
 
 
 

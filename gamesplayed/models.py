@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import User, Realm, Alt
-
+from django.utils import timezone
+from datetime import timedelta
 
 class RunType(models.Model):
     name = models.CharField(max_length=128, blank=True, null=False)
@@ -9,6 +10,34 @@ class RunType(models.Model):
     def __str__(self) -> str:
         return self.name
     
+
+
+class Cycle(models.Model):
+    CYCLE_CHOICES = (
+        ('O', 'Open'),
+        ('C', 'Close'),
+    )
+    status = models.CharField(max_length=1, choices=CYCLE_CHOICES)
+    start_date = models.DateTimeField(default=timezone.now().today())
+    end_date = models.DateTimeField()
+    
+
+    @classmethod
+    def create_or_get_latest(cls):
+        latest = cls.objects.filter()
+        if latest:
+            if latest.last().status != "C":
+                return latest.last().id
+        cycle = cls.objects.get_or_create(
+            status = 'O',
+            defaults=dict(start_date = timezone.datetime.now() ,end_date=timezone.datetime.now() + timedelta(days=7))
+        )
+        return cycle[0].id
+
+    def __str__(self) -> str:
+        return (self.start_date.strftime('%Y-%m-%d %H:%M'))
+
+
 class Attendance(models.Model):
     ATTENDANCE_CHOICES = (
         ('A', 'Active'),
@@ -27,10 +56,12 @@ class Attendance(models.Model):
     status = models.CharField(max_length=1, choices=ATTENDANCE_CHOICES)
     characters_name = models.CharField(max_length=1024, blank=True, null=True)
     paid_status = models.BooleanField(default=False)
+    cycle = models.ForeignKey(Cycle, on_delete=models.CASCADE, default=Cycle.create_or_get_latest)
 
     def __str__(self) -> str:
         return str(self.date_time)
-    
+
+
 class CurrentRealm(models.Model):
     attendance = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     realm = models.ForeignKey(Realm, on_delete=models.CASCADE, blank=True, null=True)
@@ -70,10 +101,28 @@ class Role(models.Model):
         if role:
             return role.first().id
         role = cls.objects.get_or_create(
-            name="default booster 1.0",
+            name="booster",
             defaults=dict(ratio=1.0)
         )
         return role[0].id
+    
+    @classmethod
+    def get_default_raidleader(cls):
+        role = cls.objects.get_or_create(
+            name="Raid leader",
+            defaults=dict(ratio=1.5)
+        )
+        return role[0]
+    
+    @classmethod
+    def get_default_assistant(cls):
+        role = cls.objects.get_or_create(
+            name="Assistant",
+            defaults=dict(ratio=1.1)
+        )
+        return role[0]
+    
+
     
 
 
@@ -85,6 +134,7 @@ class AttendanceDetail(models.Model):
     missing_boss = models.IntegerField(default=0)
     multiplier = models.FloatField(default=1.0)
     cut = models.IntegerField(default=0)
+    payment_character = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True, default=None, related_name="payment_character")
 
     def __str__(self) -> str:
         try:
@@ -97,6 +147,14 @@ class AttendanceDetail(models.Model):
                 return name
             except:
                 return None
+
+
+class Payment(models.Model):
+    is_paid = models.BooleanField(default=False)
+    cycle = models.ForeignKey(Cycle, on_delete=models.CASCADE)
+    string = models.CharField(max_length=256, blank=True, null=True)
+    paid_date = models.DateTimeField(blank=True, null=True)
+    detail = models.ForeignKey(AttendanceDetail, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class CutInIR(models.Model):

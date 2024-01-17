@@ -1,7 +1,7 @@
 from typing import Any
 from django.forms import ModelForm
 from django import forms
-from .models import User, Team, Wallet, Loan, Debt, Ticket
+from .models import User, Team, Loan, Debt, Ticket, CardDetail
 from django.core.exceptions import ValidationError
 
 class SignupForm(forms.Form):
@@ -126,24 +126,7 @@ class TeamRequestForm(forms.Form):
     response = forms.ChoiceField(label="", required=True, widget=forms.RadioSelect, choices=RESPONSE_CHOICES)
 
 
-class WalletForm(ModelForm):
-    class Meta:
-        model = Wallet
-        fields = ['card_number', 'IR', 'card_full_name']
 
-    def clean(self):
-        cleaned_data = super().clean()
-        card_number = cleaned_data.get('card_number')
-        IR = cleaned_data.get('IR')
-
-        if not card_number.isdigit():
-            raise ValidationError("card number must be a nubmer only")
-        if not IR.isdigit():
-            raise ValidationError("IR must be a nubmer only")
-        if len(card_number) != 16:
-            raise ValidationError("card number must be 16 digits")
-        if len(IR) != 24:
-            raise ValidationError("IR muset be 24 digits")
 
 
 class ResetPasswordForm(forms.Form):
@@ -174,13 +157,9 @@ class LoanForm(ModelForm):
     class Meta:
         model = Loan
         fields = ['note', 'amount']
-
-class DebtForm(ModelForm):
-    class Meta:
-        model = Debt
-        fields = ['debt_amount']
-
-
+        widgets = {
+            'amount' : forms.TextInput(attrs={'placeholder' : 'Unit per "K"'})
+        }
 
 class TicketForm(ModelForm):
     class Meta:
@@ -188,5 +167,39 @@ class TicketForm(ModelForm):
         fields = ['title', 'text']
 
         widgets = {
-            'text' : forms.Textarea(attrs={'placeholder': 'write your issue...', 'label': ""})
+            'text' : forms.Textarea(attrs={'placeholder': 'write your issue...'})
         }
+
+
+
+class DebtForm(ModelForm):
+    class Meta:
+        model = Debt
+        fields = ['debt_amount']
+
+class CardDetailForm(ModelForm):
+    class Meta:
+        model = CardDetail
+        fields = ['card_number', 'shaba', 'full_name']
+        widgets = {
+            'card_number' : forms.TextInput(attrs={'placeholder': '16 digits...'}),
+            'shaba' : forms.TextInput(attrs={'placeholder': '24 digits...'}),
+            'full_name' : forms.TextInput(attrs={'placeholder': 'Card full name...'})
+
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        card_number = cleaned_data.get('card_number')
+        shaba = cleaned_data.get('shaba')
+
+        if not card_number.isdigit():
+            raise ValidationError("card number must be a nubmer only")
+        if not shaba.isdigit():
+            raise ValidationError("IR must be a nubmer only")
+        if len(card_number) != 16:
+            raise ValidationError("card number must be 16 digits")
+        if len(shaba) != 24:
+            raise ValidationError("IR muset be 24 digits")
+        
+        

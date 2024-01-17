@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, WalletUpdateDetail, LoanApplication, SubmitTicket
+from .views import SignupDiscord, Signup, Dashboard, Login, Logout, CreateTeam, LeftTheTeam, TeamDetailLink, JoinTeamResponse, SeenNotif, CardUpdateDetail, LoanApplication, SubmitTicket, DeleteBankCard
 from .views import InviteUser, CheckPassword, ResetPassword, RemoveTeamMember, AskingMoney, ForgetPassword, InviteUserResponse, PositionMemberTeam, RemoveAlts, RemoveAltsResponse, DebtPaymentFromWallet
 
 
@@ -30,8 +30,9 @@ urlpatterns = [
 
 
     #wallet url
-    path('dashboard/wallet/update/', WalletUpdateDetail.as_view(), name="card_detail_update"),
-    path('dashboard/wallet/askink/money/', AskingMoney.as_view(), name="asking_money"),
+    path('dashboard/wallet/update/', CardUpdateDetail.as_view(), name="card_detail_update"),
+    path('dashboard/wallet/payment/request/', AskingMoney.as_view(), name="asking_money"),
+    path('dashboard/wallet/card/delete/<int:pk>/', DeleteBankCard.as_view(), name="delete_bank_card"),
 
     #Notifications
     path('dashboard/notifications/seen/', SeenNotif.as_view(), name="seen_notifications"),

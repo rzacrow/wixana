@@ -39,20 +39,53 @@ class User(AbstractUser):
     
 
 
-
-
 class Wallet(models.Model):
     player = models.OneToOneField(User, on_delete=models.CASCADE)
-    card_number = models.CharField(max_length=16, blank=True, null=True, unique=True)
-    IR = models.CharField(max_length=24, blank=True, null=True, unique=True)
-    card_full_name = models.CharField(max_length=128, blank=False, null=False)
-    amount = models.IntegerField(default=0)
+    amount = models.IntegerField(default=0, verbose_name="Balance")
 
     def __str__(self) -> str:
-        return self.card_full_name
+            if self.player.nick_name:
+                return self.player.nick_name
+            return self.player.username
     
 
+class CardDetail(models.Model):
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
+    card_number = models.CharField(max_length=16, blank=False, null=False)
+    shaba = models.CharField(max_length=24, blank=False, null=False)
+    full_name = models.CharField(max_length=128, blank=False, null=False)
 
+    def split_show_card(self):
+        try:
+            card_number = ""
+            for i in range(len(self.card_number)):
+                if ((i) % 4) == 0:
+                    card_number += '\t\t'
+                card_number += self.card_number[i]
+            return card_number
+
+        except:
+            return None
+        
+    def split_show_shaba(self):
+        try:
+            card_number = ""
+            for i in range(len(self.shaba)):
+                if i == 2:
+                    card_number += '\t\t'
+                if ((i+2) % 4) == 0:
+                    card_number += '\t\t'
+                card_number += self.shaba[i]
+            return card_number
+
+        except:
+            return None
+        
+    def __str__(self) -> str:
+        try:
+            return self.split_show_card()
+        except:
+            return None
 
 class Realm(models.Model):
     name = models.CharField(max_length=128, blank=False, null=False)
@@ -73,10 +106,7 @@ class Alt(models.Model):
     status = models.CharField(max_length=8, choices=ALT_STATUS_CHOICES, default='Awaiting')
     realm = models.ForeignKey(Realm, on_delete=models.PROTECT)
     def __str__(self) -> str:
-        name = self.player.username
-        if self.player.nick_name:
-            name = self.player.nick_name
-        return f"{name} | {self.name},{self.realm.name}"
+        return f"{self.name}-{self.realm.name}"
 
 
 class RemoveAltRequest(models.Model):
@@ -145,7 +175,7 @@ class InviteMember(models.Model):
     )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    answer = models.CharField(choices=INVITE_ANSWER)
+    answer = models.CharField(max_length=7, choices=INVITE_ANSWER)
 
 class Notifications(models.Model):
     NOTIF_CHOICES = (
@@ -179,7 +209,7 @@ class Transaction(models.Model):
     amount = models.IntegerField(default=0)
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='CUT')
     alt = models.ForeignKey(Alt, on_delete=models.CASCADE, blank=True, null=True)
-    card_detail = models.ForeignKey(Wallet, on_delete=models.CASCADE, blank=True, null=True)
+    card_detail = models.ForeignKey(CardDetail, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.id)

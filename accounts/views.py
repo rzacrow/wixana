@@ -9,10 +9,10 @@ from . import booster_dashboard
 from django.core.mail import send_mail
 from django.utils import timezone
 #forms
-from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, WalletForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm, TicketForm
+from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, CardDetailForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm, TicketForm
 
 #models
-from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer
+from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer, CardDetail
 from gamesplayed.models import CutInIR
 
 
@@ -256,7 +256,7 @@ class Dashboard(View):
                 context['team'] = booster_dashboard.get_team(pk=user.id)
                 context['create_team_form'] = CreateTeamForm()
                 context['matches'] = booster_dashboard.get_matches(pk=user.id)
-                context['wallet'] = booster_dashboard.get_wallet(pk=user.id)
+                context['card_detail'] = booster_dashboard.get_card_and_card_form(pk=user.id)
                 context['wallet_report'] = booster_dashboard.wallet_report(pk=user.id)
                 context['cut_per_ir'] = booster_dashboard.cut_per_ir()
                 context['transactions'] = booster_dashboard.transactions(pk=user.id)
@@ -506,22 +506,22 @@ class SeenNotif(View):
         return redirect(reverse('dashboard') + '?tab=notifications')
 
 
-class WalletUpdateDetail(View):
+class CardUpdateDetail(View):
     def post(self, request):
-        wallet_form = WalletForm(request.POST)
-        if wallet_form.is_valid():
-            data = wallet_form.cleaned_data
-            wallet = Wallet.objects.get_or_create(player=request.user)
-            wallet = wallet[0]
-            wallet.card_full_name = data['card_full_name']
-            wallet.card_number = data['card_number']
-            wallet.IR = data['IR']
-            wallet.save()
-
-            messages.add_message(request, messages.SUCCESS, 'Wallet detail, updated successfully')
-            return redirect('dashboard')
+        card_detail_form = CardDetailForm(request.POST)
+        if card_detail_form.is_valid():
+            data = card_detail_form.cleaned_data
+            try:
+                wallet = Wallet.objects.get(player=request.user)
+                card = CardDetail.objects.create(wallet=wallet, card_number=data['card_number'], full_name=data['full_name'], shaba=data['shaba'])
+                card.save()
+                messages.add_message(request, messages.SUCCESS, 'Wallet detail, updated successfully')
+                return redirect(reverse('dashboard') + '?tab=wallet')
+            except:
+                messages.add_message(request, messages.ERROR, message="something went wrong!")
+                return redirect(reverse('dashboard') + '?tab=wallet')
         else:
-            messages.add_message(request, messages.ERROR, wallet_form.errors)
+            messages.add_message(request, messages.ERROR, card_detail_form.errors)
             return redirect(reverse('dashboard') + '?tab=wallet')
         
 
@@ -533,6 +533,7 @@ class AskingMoney(View):
                 currency = request.POST['asking_money_type']
                 amount = int(request.POST['asking_money_amount'])
                 wallet = Wallet.objects.get(player=user)
+                card_detail = request.POST['card']
 
                 amount = amount * 1000
                 if (amount <= wallet.amount) and (wallet.amount >= 1000):
@@ -547,13 +548,25 @@ class AskingMoney(View):
                         amount = amount // 1000
                         if currency == 'IR':
                             try:
+                                try:
+                                    card_detail = CardDetail.objects.get(id=card_detail)
+                                except:
+                                    card_detail = None
+                                    messages.add_message(request, messages.ERROR, 'Card number is not valid')
+                                    wallet.amount += (amount * 1000)
+                                    wallet.save()
+                                    return redirect(reverse('dashboard') + "?tab=wallet")
+
                                 cut_in_ir = CutInIR.objects.last()
                                 cut_in_ir = int(cut_in_ir.amount)
                             except:
-                                Transaction.objects.create(requester=user, amount=amount, currency=currency, caption="there was a problem to convert the rate, the amount mentioned is in Cut", card_detail=wallet)
+                                messages.add_message(request, messages.ERROR, 'There was a problem receiving the amount in Tomans, try again later')
+                                wallet.amount += (amount * 1000)
+                                wallet.save()
+                                return redirect(reverse('dashboard') + "?tab=wallet")
                             else:
                                 amount_in_ir = amount * cut_in_ir
-                                Transaction.objects.create(requester=user, amount=amount_in_ir, currency=currency, caption=f"Cut: {amount} K", card_detail=wallet)
+                                Transaction.objects.create(requester=user, amount=amount_in_ir, currency=currency, caption=f"Cut: {amount} K", card_detail=card_detail)
                             messages.add_message(request, messages.SUCCESS, "Your payment request has been successfully registered")
                         else:
                             try:
@@ -926,3 +939,16 @@ class SubmitTicket(View):
         else:
             messages.add_message(request, messages.WARNING, 'Request is not valid')
             return redirect(reverse('dashboard') + '?tab=ticket')
+        
+
+class DeleteBankCard(View):
+    def get(self, request, pk):
+        try:
+            card_detail = CardDetail.objects.get(id=pk)
+            if request.user == card_detail.wallet.player:
+                card_detail.delete()
+                messages.add_message(request, messages.SUCCESS, 'Delete card successfully')
+                return redirect(reverse('dashboard') + "?tab=wallet")
+        except:
+                messages.add_message(request, messages.SUCCESS, 'Something went wrong!')
+                return redirect(reverse('dashboard') + "?tab=wallet")

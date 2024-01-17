@@ -69,12 +69,6 @@
                             <span class="material-symbols-outlined">
                                 mark_as_unread
                                 </span>&nbsp;Ticket
-                            {% if unseen_notif_count %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{unseen_notif_count}}
-                                <span class="visually-hidden">unread messages</span>
-                              </span>
-                            {% endif %}
                         </button>
 
 
@@ -508,7 +502,7 @@
                                                             </div>
                                                         </div>
                                                 {% else %}
-                                                    <div class="dashboard-detail-item from-top-25"> 
+                                                    <div class="dashboard-detail-item"> 
                                                         <p class="min-height-200 center-r-c">There aren't any team</p>
                                                     </div>
                                                 {% endif %}
@@ -522,7 +516,19 @@
                         <div class="tab-pane fade dashboard-detail" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
                             <div class="row ">
                                 <div class="col">
-                                        <div class="dashboard-detail-item from-top-25-mobile">
+
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="dashboard-detail-item without-min-height">
+                                                <div class="form-check form-switch margin-bottom-less">
+                                                    <input class="form-check-input currenciesSwitch" type="checkbox" role="switch" id="currenciesSwitch">
+                                                    <label class="form-check-label margin-bottom-less" for="currenciesSwitch">IR</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                        <div class="dashboard-detail-item from-top-25">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
                                                     stadia_controller
@@ -543,7 +549,7 @@
                                                                 <td class="bg-transparent color-white-important">{{match.attendane.date_time|date:"Y-m-d H:i" }}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
-                                                                <td class="bg-transparent color-white-important">{{match.cut}}</td>
+                                                                <td class="bg-transparent color-white-important price-listener">{% if match.cut >= 1000 %}{% widthratio match.cut 1000 1 %} K{% else %}{{match.cut}}{% endif %}</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </table>
@@ -575,7 +581,7 @@
                                                                 <td class="bg-transparent color-white-important">{{ match.attendane.date_time|date:"Y-m-d H:i" }}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
-                                                                <td class="bg-transparent color-white-important">{{match.cut}}</td>
+                                                                <td class="bg-transparent color-white-important price-listener">{% if match.cut >= 1000 %}{% widthratio match.cut 1000 1 %} K{% else %}{{match.cut}}{% endif %}</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </table>
@@ -612,8 +618,7 @@
                                                                 {% csrf_token %}
 
                                                                 <div class="mb-3">
-                                                                    <span class="help-block">Ignore it, if your payment method is it "IR"</span>
-                                                                    <select name='alt' id="alt">
+                                                                    <select name='alt' id="select-alt">
                                                                         <option value="0">Alts</option>
                                                                         {% if verified_alts %}
                                                                             {% for alt in verified_alts %}
@@ -621,14 +626,23 @@
                                                                             {% endfor %}
                                                                         {% endif %}
                                                                     </select>
+
+                                                                    {% if card_detail.cards %}
+                                                                    <select name='card' class="display-none" id="select-card">
+                                                                        <option value="0">Card</option>
+                                                                            {% for card in card_detail.cards %}
+                                                                                <option value="{{card.id}}">{{card.split_show_card}}</option>
+                                                                            {% endfor %}
+                                                                    </select>
+                                                                    {% endif %}
                                                                 </div>
 
                                                                 <label class="form-label">Amount</label>
-                                                                <input type="number" placeholder="amount in cut..." name="asking_money_amount">
+                                                                <input type="number" placeholder="units per 'K'" name="asking_money_amount">
 
                                                                 <div class="mb-3 from-top-15">
-                                                                    <label for="asking_money_type" class="form-label">Payment method</label>
-                                                                    <select name="asking_money_type" id="asking_money_type" class="form-select">
+                                                                    <label for="payment-request-type" class="form-label">Payment method</label>
+                                                                    <select name="asking_money_type" id="payment-request-type" class="form-select" onchange="payment_request_method()">
                                                                         <option value="CUT" selected>Cut</option>
                                                                         <option value="IR">IR</option>
                                                                     </select>
@@ -641,41 +655,62 @@
                                                     </div>
                                                 </div>
 
+                                                <script>
+                                                    function payment_request_method() {
+                                                        method = document.getElementById("payment-request-type").value;
+                                                        if (method == 'IR'){
+                                                            document.getElementById('select-alt').style.display = 'none';
+                                                            document.getElementById('select-card').style.display = 'block';
+                                                        } else if (method == 'CUT'){
+                                                            document.getElementById('select-alt').style.display = 'block';
+                                                            document.getElementById('select-card').style.display = 'none';
+                                                        }
+                                                    }
+                                                </script>
+
                                                 <!-- Financial Reports -->
                                                 <div class="col-md-6 from-top-25-mobile">
                                                     <div class="dashboard-detail-item">
-                                                        <p class="center-icon-text">
-                                                            <span class="material-symbols-outlined">
-                                                                query_stats
-                                                                </span>&nbsp;Report
-                                                        </p>
+                                                        <div class="flex-between">
+                                                            <div class="center-icon-text">
+                                                                <span class="material-symbols-outlined">
+                                                                    query_stats
+                                                                    </span>&nbsp;Report
+                                                            </div>
+                                                            <div>
+                                                                <div class="form-check form-switch margin-bottom-less">
+                                                                    <input class="form-check-input" type="checkbox" role="switch" id="currenciesSwitch2">
+                                                                    <label class="form-check-label margin-bottom-less" for="currenciesSwitch2">IR</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                         <hr>
                                                         <div class="content">
                                                             {% if wallet_report %}
                                                                 <div class="flex-between alert alert-warning">
                                                                     <div class="center-icon-text"><img src="{% static 'accounts/images/gold.png' %}" class="img-icon">&nbsp;Wallet Balance:</div>
-                                                                    <div>{{wallet_report.amount}}</div>
+                                                                    <div class="price-listener-2">{{wallet_report.amount}}</div>
                                                                 </div>
 
                                                                 <div class="flex-between alert">
                                                                     <div class="center-icon-text"><span class="material-symbols-outlined">
                                                                         looks_one
                                                                         </span>&nbsp;Today's Income:</div>
-                                                                    <div>{{wallet_report.todays_income}}</div>
+                                                                    <div class="price-listener-2">{{wallet_report.todays_income}}</div>
                                                                 </div>
 
                                                                 <div class="flex-between alert">
                                                                     <div class="center-icon-text"><span class="material-symbols-outlined">
                                                                         counter_7
                                                                         </span>&nbsp;Income this week:</div>
-                                                                    <div>{{wallet_report.toweek_income}}</div>
+                                                                    <div class="price-listener-2">{{wallet_report.toweek_income}}</div>
                                                                 </div>
 
                                                                 <div class="flex-between alert">
                                                                     <div class="center-icon-text"><span class="material-symbols-outlined">
                                                                         calendar_month
                                                                         </span>&nbsp;Income this month:</div>
-                                                                    <div>{{wallet_report.tomonth_income}}</div>
+                                                                    <div class="price-listener-2">{{wallet_report.tomonth_income}}</div>
                                                                 </div>
                                                             {% else %}
                                                                 <p class="min-height-200 center-r-c"><span class="material-symbols-outlined color-red">
@@ -686,6 +721,66 @@
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            <!-- exchange price -->
+                                            <script>
+                                                var checkbox = document.getElementById("currenciesSwitch");
+                                                var checkbox2 = document.getElementById("currenciesSwitch2");
+
+                                                checkbox.addEventListener('change', function() {
+                                                if (this.checked) {
+                                                    var elements = document.getElementsByClassName("price-listener");
+                                                    for (element of elements){
+                                                        var before = element.innerText.split(" ");
+                                                        element.innerText = before[0]{% if cut_per_ir %} * {{cut_per_ir}}{% endif %};
+                                                        if (element.innerText != "0" ){
+                                                            {% if cut_per_ir %}
+                                                                element.innerText += " T";
+                                                            {% else %}
+                                                                element.innerText += ' K';
+                                                            {% endif %}
+                                                        }
+                                                    }
+                                                } else {
+                                                    var elements = document.getElementsByClassName("price-listener");
+                                                    for (element of elements){
+                                                        var before = element.innerText.split(" ");
+                                                        element.innerText = before[0]{% if cut_per_ir %} / {{cut_per_ir}}{% endif %};
+                                                        if (element.innerText != "0"){
+                                                            element.innerText += " K"
+                                                        }
+                                                    }
+                                                }
+                                                });
+
+
+                                                checkbox2.addEventListener('change', function() {
+                                                    if (this.checked) {
+                                                        var elements = document.getElementsByClassName("price-listener-2");
+                                                        for (element of elements){
+                                                            var before = element.innerText.split(" ");
+                                                            element.innerText = before[0]{% if cut_per_ir %} * {{cut_per_ir}}{% endif %};
+                                                            if (element.innerText != "0" ){
+                                                                {% if cut_per_ir %}
+                                                                    element.innerText += " T";
+                                                                {% else %}
+                                                                    element.innerText += ' K';
+                                                                {% endif %}
+                                                            }
+                                                        }
+                                                    } else {
+                                                        var elements = document.getElementsByClassName("price-listener-2");
+                                                        for (element of elements){
+                                                            var before = element.innerText.split(" ");
+                                                            element.innerText = before[0]{% if cut_per_ir %} / {{cut_per_ir}}{% endif %};
+                                                            if (element.innerText != "0"){
+                                                                element.innerText += " K"
+                                                            }
+                                                        }
+                                                    }
+                                                    });
+                                            </script>
+                                            
 
                                         <!-- Transaction -->
                                             <div class="row">
@@ -710,13 +805,13 @@
                                                                     </thead>
                                                                     {% for ts in transactions %}
                                                                         <tr>
-                                                                            <td class="">{{ts.status}}</td>
-                                                                            <td class="">{{ts.created|date:"Y-m-d H:i" }}</td>
-                                                                            <td class="">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
-                                                                            <td class="">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
-                                                                            <td class="">{{ts.currency}}</td>
-                                                                            <td class="">
-                                                                                {% if ts.currency == 'CUT' %}&nbsp;{{ts.amount}} K
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">{{ts.status}}</td>
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">{{ts.created|date:"Y-m-d H:i" }}</td>
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">{% if ts.caption %}{{ts.caption}}{% endif %}</td>
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">{{ts.paid_date|date:"Y-m-d H:i" }}</td>
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">{{ts.currency}}</td>
+                                                                            <td class="{% if ts.status == 'PAID' %}bg-green{% endif %}">
+                                                                                {% if ts.currency == 'CUT' %}&nbsp;{% if ts.amount >= 1000 %}{% widthratio ts.amount 1000 1 %} K{% else %}{{ts.amount}}{% endif %}
                                                                                 {% else %}
                                                                                 T&nbsp;{{ts.amount}}
                                                                                 {% endif %}
@@ -739,19 +834,35 @@
                                                 <!-- Wallet Detail -->
                                                 <div class="col-lg-6 from-top-25">
                                                     <div class="dashboard-detail-item">
-                                                        <p class="center-icon-text">
-                                                            <span class="material-symbols-outlined">
-                                                                wallet
-                                                                </span>&nbsp;Wallet Detail
-                                                        </p>
-                                                        
-                                                        <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
-                                                            {% csrf_token %}
-                                                            <div class="bank-card">
-                                                                {{wallet.as_div}}
-                                                            </div>
-                                                            <input type="submit" value="Update" class="btn btn-porpule color-white from-top-15">
-                                                        </form>
+                                                        <div class="flex-between">
+                                                                <div class="center-icon-text"><img src="{% static 'accounts/images/newcard.png' %}" class="img-icon">&nbsp;Payment Card
+                                                                </div>
+
+                                                                <div>
+                                                                    <button type="button" class="btn btn-porpule color-white center-icon-text" id="create-bank-card" data-bs-toggle="modal" data-bs-target="#createBankCardModal">
+                                                                        <span class="material-symbols-outlined">
+                                                                            credit_card
+                                                                            </span>&nbsp; New +
+                                                                    </button>
+                                                                </div>
+                                                        </div>
+
+                                                        {% if card_detail.cards %}
+                                                            {% for card in card_detail.cards %}
+                                                                    <div class="alert alert-dark from-top-25">
+                                                                        <strong class="flex-center">{{card.split_show_card}}</strong>
+                                                                        <p class="flex-center">IR {{card.split_show_shaba}}</p>
+                                                                        <div class="flex-between">
+                                                                            <div><a href="{% url 'delete_bank_card' card.id %}"><span class="material-symbols-outlined color-red-important">
+                                                                                delete
+                                                                                </span></a></div>
+                                                                            <div>{{card.full_name}}</div>
+                                                                        </div>
+                                                                    </div>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                                <p class="min-height-200 center-r-c">No card has been registered yet</p>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
 
@@ -766,11 +877,11 @@
                                                         </p>
                                                         <hr>
                                                         <div>
-                                                            <form class="alert">
-                                                                <input type="number" name="currency_exchange" id="currency_exchange" placeholder="Enter cut to calculate in IR..." class="form-control">
+                                                            <form>
+                                                                <input type="number" name="currency_exchange" id="currency_exchange" placeholder="units per 'K'" class="form-control">
                                                                 <input type="hidden" id="cut_in_ir_price" value="{% if cut_per_ir %}{{cut_per_ir}}{% else %}0{% endif %}" name="cut_in_ir_price">
                                                             </form>
-                                                            <div class="alert">
+                                                            <div class="from-top-15">
                                                                 <button type="button" class="btn btn-porpule color-white full-width" id="btn-click-calc" data-bs-toggle="modal" data-bs-target="#calculaterModal">
                                                                     Calculate
                                                                 </button>
@@ -1145,6 +1256,29 @@
                 </div>
 
             </div>
+            
+
+            <!-- Register Bank Card Modal -->
+            <div class="modal fade" id="createBankCardModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabelbankcard" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5" id="staticBackdropLabelbankcard">Wixana</h1>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="{% url 'card_detail_update' %}" onsubmit="return confirm('Do you really want to submit the form?');">
+                            {% csrf_token %}
+                            <div class="bank-card">
+                                {{card_detail.card_form.as_div}}
+                            </div>
+                            <input type="submit" value="Submit" class="btn btn-porpule color-white from-top-15">
+                        </form>                    </div>
+                  </div>
+                </div>
+            </div>
+
+
 
             <!-- Exchange mony calculator Modal -->
             <div class="modal fade" id="calculaterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

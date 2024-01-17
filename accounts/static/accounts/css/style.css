@@ -245,10 +245,16 @@ a:hover, .nav-link:hover{
     transition: 0.3s;background-image: none; background-color: #780687; box-shadow: none; color: #f8f8f8 !important;
 }
 .btn-porpule-solid{
-    background-color: #780687; box-shadow: none; color: #f8f8f8 !important; transition: 0.3s;
+    background-color: #780687 !important; box-shadow: none; color: #f8f8f8 !important; transition: 0.3s;
+}
+.btn-red-gradiant{
+    background-image: linear-gradient(to right, #367167, #4b9b8e) !important; box-shadow: 2px 2px 8px 3px #00000017; transition: 0.3s;
 }
 .btn-porpule-solid:hover{
     background-color: #762581; box-shadow: none; color: #f8f8f8 !important; transition: 0.3s;
+}
+.color-red-important{
+    color: #c61016 !important;
 }
 .shadow-none-hover:hover{
     box-shadow: none;
@@ -334,6 +340,9 @@ a:hover, .nav-link:hover{
 }
 .bg-gray{
     border: 1px solid #f0f0f0; border-radius: 20px; padding: 10px;
+}
+.bg-green{
+    background-color: #cfe5d3 !important; color: #3d8738 !important;
 }
 .card-link{
     box-shadow: 0 0 12px 6px #f6f6f6 inset; transition: 0.3s; margin-top: 25px;
@@ -541,9 +550,8 @@ select{
     border: none;
 }
 .bank-card{
-    border: 1px solid #c1c1c1; box-shadow: 2px 2px 8px 2px #211017; border-radius: 12px; padding: 15px; margin-top: 15px;
+    background-color: #331b24;  padding: 15px; border-radius: 6px;
 }
-
 
 
 
@@ -767,7 +775,7 @@ select{
         padding: 25px; display: flex; flex-wrap: wrap; justify-content: center;
     }
     .table-responsive{
-        overflow-x: auto !important; margin: auto !important; padding: auto !important; max-width: 380px !important;
+        overflow-x: auto !important; margin: auto !important; padding: auto !important; max-width: 320px !important;
     }
      
     .disp-none-mobile{
@@ -801,4 +809,10 @@ select{
 }
 .margin-top-10{
     margin-top: 18px !important;
+}
+.display-none{
+    display: none;
+}
+.without-min-height{
+    min-height: auto !important;
 }
