@@ -1,7 +1,7 @@
 from .models import User, Alt, Realm, TeamDetail, TeamRequest, Wallet, Transaction, Notifications, Team, InviteMember, RemoveAltRequest, Debt, Loan, CardDetail
 from gamesplayed.models import Attendance, CutInIR, AttendanceDetail
 from .forms import UpdateProfileForm, CardDetailForm
-from gamesplayed.models import CutInIR
+from gamesplayed.models import CutInIR, Cycle, RunType
 from django.db.models import Sum
 from django.utils import timezone
 from django.db.models import Q
@@ -80,7 +80,6 @@ def get_card_and_card_form(pk):
     wallet = Wallet.objects.get_or_create(player=player)
     wallet = wallet[0]
     cards = CardDetail.objects.filter(wallet=wallet)
-    print(cards)
     card_form = CardDetailForm()
     return {'cards': cards, 'card_form':card_form}
 
@@ -148,7 +147,9 @@ def unseen_notif_badge(pk):
         return None    
 
 
-
+def attendance_admin():
+    attendances = Attendance.objects.filter().order_by('-date_time')
+    return attendances
 #Get all teams
 def get_teams():
     teams = Team.objects.filter(status='Verified')

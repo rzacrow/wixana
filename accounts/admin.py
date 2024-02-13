@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User, Group, Permission
-from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer, CardDetail
+from .models import User as um, Team, TeamDetail, Alt, Realm, Wallet, Notifications, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer, CardDetail, InviteMember
 from django.db import models
 from unfold.admin import ModelAdmin,TabularInline, StackedInline
 from unfold.contrib.forms.widgets import WysiwygWidget
@@ -19,7 +19,9 @@ admin.site.unregister(Group)
 class GroupAdmin(gAdmin,ModelAdmin):
     list_display = ['name']
 
-
+@admin.register(InviteMember)
+class InviteMemberAdmin(ModelAdmin):
+    list_display = ['user', 'answer']
     
 @admin.register(Realm)
 class Realm(ModelAdmin):
@@ -124,7 +126,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     @admin.display(description="Lost Login")
     def lost_login_show(self, obj):
         try:
-            return obj.last_login.strftime("%Y-%m-%d %H:%M")
+            return obj.last_login.strftime("%Y-%m-%d")
         except:
             return None
     

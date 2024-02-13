@@ -8,12 +8,17 @@ import shutil, os, random
 from . import booster_dashboard
 from django.core.mail import send_mail
 from django.utils import timezone
+from django.contrib.auth.models import Group, Permission
+from django.db.models import Q
 #forms
 from .forms import SignupForm, LoginForm, UpdateProfileForm, CreateTeamForm, CardDetailForm, ResetPasswordForm, ForgetPasswordForm, CheckPasswordForm, LoanForm, DebtForm, TicketForm
+from django.contrib.contenttypes.models import ContentType
 
 #models
 from .models import User, Wallet, Alt, Realm, Team, TeamDetail, TeamRequest, Notifications, Transaction, InviteMember, RemoveAltRequest, Loan, Debt, WixanaBankDetail, PaymentDebtTrackingCode, Ticket, TicketAnswer, CardDetail
-from gamesplayed.models import CutInIR
+from gamesplayed.models import CutInIR, AttendanceDetail, Attendance
+
+from gamesplayed.forms import DateTimeBootstrap
 
 
 class Signup(View):
@@ -53,9 +58,6 @@ class Signup(View):
             
         else:
             return render(request, 'accounts/signup.html', {'form' : form})
-
-
-
 
 
 class SignupDiscord(View):
@@ -212,12 +214,12 @@ class Logout(View):
 class Dashboard(View):
     def get(self, request):
         if request.user.is_authenticated:
+            
             #Define Context
             context = dict()
 
             #get user 
             user = request.user
-
             #get user profile
             context['profile_form'] = booster_dashboard.get_profile(pk=user.id)
 
@@ -225,10 +227,14 @@ class Dashboard(View):
             altname =  request.GET.get('altname')
             realm = request.GET.get('realm')
 
+            payment_character = request.GET.get('payment_character')
             #A flag to identify the user level
             is_superuser = None
             is_user = None
             remove_alt_request = None
+            has_perm_view_attendance_admin = None
+
+
             if altname and realm:
                 if (altname == '') or (altname == None) or (int(realm) == 0):
                     messages.add_message(request, messages.ERROR, 'You must fill all required fields')
@@ -237,9 +243,24 @@ class Dashboard(View):
                     Alt.objects.create(realm=realm_obj, name=altname, player=request.user)
                     messages.add_message(request, messages.SUCCESS, 'Alt added successfully, after admin approval, it will be placed in your profile')
 
+
             tab = request.GET.get('tab')
             if tab:
                 context['tab'] = tab
+
+
+            if payment_character:
+                if payment_character != 0:
+                    at_id = request.GET.get('at_pk')
+                    at_ad = AttendanceDetail.objects.get(id=at_id)
+                    alt = Alt.objects.get(id=payment_character)
+                    at_ad.payment_character = alt
+                    at_ad.save()
+                    return redirect(reverse('dashboard') + '?tab=attendance')
+
+
+
+
             if user.is_superuser:
                 remove_alt_request = RemoveAltRequest.objects.filter(status='Awaiting')
                 context['remove_alt_request'] = remove_alt_request
@@ -268,6 +289,11 @@ class Dashboard(View):
                 context['debt_form'] = DebtForm()
                 context['loan_history'] = booster_dashboard.loan_history(pk=user.id)
                 context['debts'] = booster_dashboard.get_debt(pk=user.id)
+
+                if (user.is_staff) and (user.has_perm('gamesplayed.add_attendance')):
+                    has_perm_view_attendance_admin = True
+                    context['admin_attendances'] = booster_dashboard.attendance_admin()
+
                 try:
                     context['wixana_card_detail'] = WixanaBankDetail.objects.last()
                 except:
@@ -286,7 +312,7 @@ class Dashboard(View):
 
             
             context['is_superuser'] = is_superuser
-
+            context['has_perm_view_attendance_admin'] = has_perm_view_attendance_admin
             return render(request, 'accounts/dashboard.html', context)
         else:
             messages.add_message(request, messages.WARNING, 'Login required!')
@@ -337,6 +363,21 @@ class Dashboard(View):
             user.nick_name = nick_name
             user.save()
 
+            gp = Group.objects.get_or_create(name="COMPLETED_PROFILE")
+            ct_team = ContentType.objects.get_for_model(Team)
+            ct_loan = ContentType.objects.get_for_model(Loan)
+            ct_transaction = ContentType.objects.get_for_model(Transaction)
+            perms = Permission.objects.filter(Q(content_type=ct_team) | Q(content_type=ct_loan) | Q(content_type=ct_transaction))
+
+            if ((user.phone is not None) and (user.phone != "")) and ((user.national_code is not None) and (user.national_code != "")) and ((user.email is not None) and (user.email != "")):
+                gp[0].permissions.set(perms)
+                gp[0].save()
+                user.groups.add(gp[0]) 
+                user.save()
+            else:
+                user.groups.remove(gp[0]) 
+                user.save()
+
             messages.add_message(request, messages.SUCCESS, "Profile updated successfully")
             return redirect('dashboard')
         
@@ -347,19 +388,23 @@ class Dashboard(View):
 
 class CreateTeam(View):
     def post(self, request):
-        create_team_form = CreateTeamForm(request.POST)
-        if create_team_form.is_valid():
-            data = create_team_form.cleaned_data
-            team = Team.objects.create(name=data['name'])
-            team.save()
+        user = request.user
+        if user.is_authenticated and user.has_perm('accounts.add_team'):
+            create_team_form = CreateTeamForm(request.POST)
+            if create_team_form.is_valid():
+                data = create_team_form.cleaned_data
+                team = Team.objects.create(name=data['name'])
+                team.save()
 
-            TeamDetail.objects.create(team=team, player=request.user, team_role="Leader")
-            messages.add_message(request, messages.SUCCESS, 'Your team created successfully')
-            return redirect(reverse('dashboard') + '?tab=team')
+                TeamDetail.objects.create(team=team, player=request.user, team_role="Leader")
+                messages.add_message(request, messages.SUCCESS, 'Your team created successfully')
+            else:
+                messages.add_message(request, messages.ERROR, f"Error team form: name is required")
         else:
-            messages.add_message(request, messages.ERROR, f"Error team form: name is required")
-            return redirect(reverse('dashboard') + '?tab=team')
-        
+            messages.add_message(request, messages.ERROR, "You do not have permission to do this. Please complete your profile")
+
+        return redirect(reverse('dashboard') + '?tab=team')
+
 class LeftTheTeam(View):
     def get(self, request, team_pk):
         team = Team.objects.filter(id=team_pk).first()
@@ -508,28 +553,34 @@ class SeenNotif(View):
 
 class CardUpdateDetail(View):
     def post(self, request):
-        card_detail_form = CardDetailForm(request.POST)
-        if card_detail_form.is_valid():
-            data = card_detail_form.cleaned_data
-            try:
-                wallet = Wallet.objects.get(player=request.user)
-                card = CardDetail.objects.create(wallet=wallet, card_number=data['card_number'], full_name=data['full_name'], shaba=data['shaba'])
-                card.save()
-                messages.add_message(request, messages.SUCCESS, 'Wallet detail, updated successfully')
-                return redirect(reverse('dashboard') + '?tab=wallet')
-            except:
-                messages.add_message(request, messages.ERROR, message="something went wrong!")
-                return redirect(reverse('dashboard') + '?tab=wallet')
+        user = request.user
+
+        if user.is_authenticated and user.has_perm('accounts.add_carddetail'):
+            card_detail_form = CardDetailForm(request.POST)
+            if card_detail_form.is_valid():
+                data = card_detail_form.cleaned_data
+                try:
+                    wallet = Wallet.objects.get(player=request.user)
+                    card = CardDetail.objects.create(wallet=wallet, card_number=data['card_number'], full_name=data['full_name'], shaba=data['shaba'])
+                    card.save()
+                    messages.add_message(request, messages.SUCCESS, 'Wallet detail, updated successfully')
+                    return redirect(reverse('dashboard') + '?tab=wallet')
+                except:
+                    messages.add_message(request, messages.ERROR, message="something went wrong!")
+                    return redirect(reverse('dashboard') + '?tab=wallet')
+            else:
+                messages.add_message(request, messages.ERROR, card_detail_form.errors)
         else:
-            messages.add_message(request, messages.ERROR, card_detail_form.errors)
-            return redirect(reverse('dashboard') + '?tab=wallet')
+            messages.add_message(request, messages.ERROR, "You do not have permission to do this. Please complete your profile")
+
+        return redirect(reverse('dashboard') + '?tab=wallet')
         
 
 class AskingMoney(View):
     def post(self, request):
         if request.user.is_authenticated:
             user = request.user
-            if user.user_type != 'U':
+            if user.user_type != 'U' and user.has_perm('accounts.add_transaction'):
                 currency = request.POST['asking_money_type']
                 amount = int(request.POST['asking_money_amount'])
                 wallet = Wallet.objects.get(player=user)
@@ -588,10 +639,11 @@ class AskingMoney(View):
 
                 else:
                     messages.add_message(request, messages.WARNING, 'Your wallet balance is not enough')
+            else:
+                messages.add_message(request, messages.ERROR, "You do not have permission to do this. Please complete your profile")
             
         return redirect(reverse('dashboard') + '?tab=wallet')
     
-
 
 class ForgetPassword(View):
     def get(self, request):
@@ -718,17 +770,30 @@ class ResetPassword(View):
 
 
 class InviteUser(View):
-    def get(self, request, team_pk, user_pk):
+    def post(self, request, team_pk):
         try:
-            user = User.objects.get(id=user_pk)
             team = Team.objects.get(id=team_pk)
-            InviteMember.objects.create(team=team, user=user, answer='Pending')
-            messages.add_message(request, messages.SUCCESS, f"Your invitation request has been sent to user {user.username}")
+            #If team not verified
+            if team.status != "Verified":
+                messages.add_message(request, messages.WARNING, f"Your team is not verified")
+                return redirect(reverse('dashboard') + '?tab=team')
+            
+            user_ids = list()
+            for key in request.POST:
+                if 'user_' in key:
+                    user_ids.append(request.POST[key])
+            for user_pk in user_ids:
+                try:
+                    user = User.objects.get(id=user_pk)
+                    InviteMember.objects.create(team=team, user=user, answer='Pending')
+                except:
+                    continue
+
+            messages.add_message(request, messages.SUCCESS, f"The invite request has been sent")
             return redirect(reverse('dashboard') + '?tab=team')
         except:
             messages.add_message(request, messages.WARNING, f"There was problem to send invitation request, Try again")
             return redirect(reverse('dashboard') + '?tab=team')
-
 
 class InviteUserResponse(View):
     def get(self, request, team_pk, user_pk, response):
@@ -834,48 +899,50 @@ class RemoveAltsResponse(View):
             return redirect(reverse('dashboard') + '?tab=notifications')
 
 
-
-
 class LoanApplication(View):
     def post(self, request):
-        debts = Debt.objects.filter(loan__user=request.user, paid_status='Unpaid')
-        loans = Loan.objects.filter(user=request.user, loan_status='Pending')
-        #if user have an unpaid loan
-        if debts:
-            messages.add_message(request, messages.WARNING, 'You have an unpaid loan')
-            return redirect(reverse('dashboard') + '?tab=loan')
-                
-        if loans:
-            messages.add_message(request, messages.WARNING, 'You have an unchecked loan request')
-            return redirect(reverse('dashboard') + '?tab=loan')        
-         
-        
+        user = request.user
 
-        form = LoanForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            try:
-                alt = Alt.objects.get(id=form.data['alt'])
-                note = data['note']
-                
-                Loan.objects.create(alt=alt, note=note, amount=data['amount'], user=request.user)
-                messages.add_message(request, messages.SUCCESS, 'Your request for a loan has been registered')
-                admins = User.objects.filter(user_type='O')
-                requester_name = request.user.username
-                if request.user.nick_name:
-                    requester_name = request.user.nick_name
-
-                for admin in admins:
-                    Notifications.objects.create(send_to=admin, title='New Loan Request', caption=f"You have a new loan request with the amount of {data['amount']} K from user {requester_name}")
+        if user.is_authenticated and user.has_perm('accounts.add_loan'):
+            debts = Debt.objects.filter(loan__user=request.user, paid_status='Unpaid')
+            loans = Loan.objects.filter(user=request.user, loan_status='Pending')
+            #if user have an unpaid loan
+            if debts:
+                messages.add_message(request, messages.WARNING, 'You have an unpaid loan')
                 return redirect(reverse('dashboard') + '?tab=loan')
-            except:
+                    
+            if loans:
+                messages.add_message(request, messages.WARNING, 'You have an unchecked loan request')
+                return redirect(reverse('dashboard') + '?tab=loan')        
+            
+            
+
+            form = LoanForm(request.POST)
+            if form.is_valid():
+                data = form.cleaned_data
+                try:
+                    alt = Alt.objects.get(id=form.data['alt'])
+                    note = data['note']
+                    
+                    Loan.objects.create(alt=alt, note=note, amount=data['amount'], user=request.user)
+                    messages.add_message(request, messages.SUCCESS, 'Your request for a loan has been registered')
+                    admins = User.objects.filter(user_type='O')
+                    requester_name = request.user.username
+                    if request.user.nick_name:
+                        requester_name = request.user.nick_name
+
+                    for admin in admins:
+                        Notifications.objects.create(send_to=admin, title='New Loan Request', caption=f"You have a new loan request with the amount of {data['amount']} K from user {requester_name}")
+                    return redirect(reverse('dashboard') + '?tab=loan')
+                except:
+                    messages.add_message(request, messages.WARNING, 'Your request is not valid')
+                    return redirect(reverse('dashboard') + '?tab=loan')
+            else:
                 messages.add_message(request, messages.WARNING, 'Your request is not valid')
-                return redirect(reverse('dashboard') + '?tab=loan')
         else:
-            messages.add_message(request, messages.WARNING, 'Your request is not valid')
-            return redirect(reverse('dashboard') + '?tab=loan')
+            messages.add_message(request, messages.ERROR, "You do not have permission to do this. Please complete your profile")
 
-
+        return redirect(reverse('dashboard') + '?tab=loan')
 
 
 class DebtPaymentFromWallet(View):

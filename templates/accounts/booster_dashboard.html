@@ -16,10 +16,20 @@
                         <button class="nav-link center-icon-text color-white none-hover {% if not tab %}active{% endif %}" id="pills-users-tab" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="true">
                             <span class="material-symbols-outlined">
                                 account_circle
-                            </span>&nbsp;Account
+                            </span>&nbsp;Accounts
                         </button>
 
                         {% if not is_user %}
+
+
+                        {% if has_perm_view_attendance_admin %}
+                        <button class="nav-link center-icon-text color-white none-hover {% if tab == 'new-attendance'%}active{% endif %}" id="pills-new-attendance-tab" data-bs-toggle="pill" data-bs-target="#pills-new-attendance" type="button" role="tab" aria-controls="pills-new-attendance" aria-selected="false" {% if is_user %}disabled{% endif %}>
+                            <span class="material-symbols-outlined">
+                                library_add
+                                </span>&nbsp;New Attendance
+                        </button>
+                        {% endif %}
+
                         <button class="nav-link center-icon-text color-white none-hover position-relative {% if tab == 'team'%}active{% endif %}" id="v-pills-teams-tab" data-bs-toggle="pill" data-bs-target="#v-pills-teams" type="button" role="tab" aria-controls="v-pills-teams" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 groups
@@ -34,7 +44,7 @@
                             {% endif %}
                         </button>
 
-                        <button class="nav-link center-icon-text color-white none-hover" id="pills-recent-match-tab" data-bs-toggle="pill" data-bs-target="#pills-recent-match" type="button" role="tab" aria-controls="pills-recent-match" aria-selected="false" {% if is_user %}disabled{% endif %}>
+                        <button class="nav-link center-icon-text color-white none-hover {% if tab == 'attendance'%}active{% endif %}" id="pills-recent-match-tab" data-bs-toggle="pill" data-bs-target="#pills-recent-match" type="button" role="tab" aria-controls="pills-recent-match" aria-selected="false" {% if is_user %}disabled{% endif %}>
                             <span class="material-symbols-outlined">
                                 joystick
                                 </span>&nbsp;Attendance
@@ -213,6 +223,68 @@
                         </div>
 
                         {% if not is_user %}
+
+                        {% if has_perm_view_attendance_admin %}
+                        <!-- New attendance -->
+                        <div class="tab-pane {% if tab == 'new-attendance' %}show active{% endif %} fade dashboard-detail" id="pills-new-attendance" role="tabpanel" aria-labelledby="pills-new-attendance-tab" tabindex="0">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="dashboard-detail-item">
+                                        <div class="flex-between">
+                                            <p class="center-icon-text">
+                                                <span class="material-symbols-outlined">
+                                                    note_stack_add
+                                                    </span>&nbsp;Attendance
+                                            </p>
+                                            <a href="{% url 'create_attendance' %}" class="btn btn-porpule color-white-important">+ New</a>
+                                        </div>
+
+                                        {% if admin_attendances %}
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead>
+                                                        <th class="bg-transparent color-white-important">Created</th>
+                                                        <th class="bg-transparent color-white-important">Status</th>
+                                                        <th class="bg-transparent color-white-important">Note</th>
+                                                        <th class="bg-transparent color-white-important">Total pot</th>
+                                                    </thead>
+                                                    <tbody>
+                                                {% for attendance in admin_attendances %}
+                                                        <tr>
+                                                            <td class="bg-transparent color-white-important"><a href="{% url 'view_attendance' attendance.id %}" class="pink-link">{{attendance.date_time|date:"Y-m-d H:i"}}</a></td>
+                                                            <td class="bg-transparent color-white-important">{{attendance.get_status_display}}</td>
+                                                            <td class="bg-transparent color-white-important">{{attendance.note}}</td>
+                                                            <td class="bg-transparent color-white-important attendance_total_pot">{{attendance.total_pot}}</td>
+                                                        </tr>
+                                                {% endfor %}
+                                                    </tbody>                                      
+                                                </table>
+                                            </div>
+
+                                        {% else %}
+                                            <p class="min-height-200 center-r-c"><span class="material-symbols-outlined color-red">
+                                            close
+                                            </span>There aren't any attendance
+                                            </p>
+                                        {% endif %}
+                                        <script>
+                                            let fields = document.getElementsByClassName('attendance_total_pot');
+                                            let value;
+
+                                            for (field of fields){
+                                                value = field.innerText;
+                                                value = value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                                field.innerText = value;
+                                            }
+                                        </script>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+
+
                         <!-- Teams -->
                         <div class="tab-pane fade {% if tab == 'team'%}show active{% endif %} dashboard-detail" id="v-pills-teams" role="tabpanel" aria-labelledby="v-pills-teams-tab" tabindex="0">
                             <div class="row">
@@ -426,24 +498,69 @@
                                                 <div class="col">
                                                     {% if team.boosters %}
                                                             <div class="dashboard-detail-item from-top-25">
-                                                                <p class="center-icon-text">
-                                                                    <span class="material-symbols-outlined">
-                                                                        person_search
-                                                                        </span>&nbsp;Boosters
-                                                                </p>
+                                                                <div class="flex-between">
+                                                                    <div class="center-icon-text">
+                                                                        <span class="material-symbols-outlined">
+                                                                            person_search
+                                                                            </span>&nbsp;Boosters
+                                                                    </div>
+                                                                    <div>
+                                                                        
+                                                                    </div>
+                                                                </div>
                                                                 <div class="row">
-                                                                    {% for booster in team.boosters %}
-                                                                        <div class="col-md-6">
-                                                                            <div class="alert alert-dark rounded flex-between align-center shadow-lg shadow-none-hover">
-                                                                                    <h6 class="center-icon-text"><span class="material-symbols-outlined">
-                                                                                        person_4
-                                                                                        </span>&nbsp;{{booster.username}}</h6>
-                                                                                    <a href="{% url 'invite_member' team.detail.id booster.id %}" class="btn btn-porpule-solid color-white-important center-icon-text"><span class="material-symbols-outlined">
-                                                                                        link
-                                                                                        </span>&nbsp;Invite</a>
+                                                                    <div class="col">
+                                                                        <form method="post" action="{% url 'invite_member' team.detail.id %}">
+                                                                        {% csrf_token %}
+                                                                            <div class="row">
+                                                                        {% for booster in team.boosters %}
+                                                                            <div class="col-md-4 from-top-15">
+                                                                                <div class="alert alert-dark rounded flex-between align-center shadow-lg shadow-none-hover border-left-porpule">
+                                                                                    <div class="flex-row margin-bottom-less">
+                                                                                        <input class="form-check-input margin-bottom-less padding-5 border-porpule booster-selected-checkbox" type="checkbox" value="{{booster.id}}" name="user_{{booster.id}}">&nbsp;
+                                                                                        <h6 class="center-icon-text margin-bottom-less"><span class="material-symbols-outlined">
+                                                                                                person_4
+                                                                                                </span>&nbsp;{{booster.username}}
+                                                                                        </h6>
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    {% endfor %}
+                                                                        {% endfor %}
+                                                                            </div>
+                                                                            <button  type="submit" class="btn btn-porpule-solid color-white-important center-icon-text" id="inviteSellectedUserBtn"><span class="material-symbols-outlined">
+                                                                                link
+                                                                                </span>&nbsp;Invite selected users
+                                                                            </button>
+                                                                        </form>
+                                                                    </div>
+
+                                                                    <!-- If user was selected -->
+                                                                    <script>
+                                                                        var checkboxes = document.getElementsByClassName("booster-selected-checkbox");
+                                                                        var invitebtn = document.getElementById('inviteSellectedUserBtn');
+                                                                        invitebtn.style.display = 'none';
+                                                                        for (checkbox of checkboxes){
+                                                                            checkbox.addEventListener('change', function() {
+                                                                                var flag = false;
+                                                                                if (this.checked) {
+                                                                                    var elements = document.getElementsByClassName("price-listener");
+                                                                                    invitebtn.style.display = 'flex';
+                                                                                }else{
+                                                                                    for (checkbox of checkboxes){
+                                                                                        if (checkbox.checked){
+                                                                                            flag = true;
+                                                                                            break;
+                                                                                        }
+                                                                                    }
+                                                                                    if (flag == false){
+                                                                                        invitebtn.style.display = 'none';
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }                                                                        
+                                                                    </script>
+
+
                                                                 </div>
                                                             </div>
                                                     {% else %}
@@ -513,7 +630,7 @@
                   
                   
                         <!-- Attendance -->
-                        <div class="tab-pane fade dashboard-detail" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
+                        <div class="tab-pane fade dashboard-detail {% if tab == 'attendance'%}show active{% endif %}" id="pills-recent-match" role="tabpanel" aria-labelledby="pills-recent-match-tab" tabindex="0">
                             <div class="row ">
                                 <div class="col">
 
@@ -528,6 +645,7 @@
                                         </div>
                                     </div>
 
+                                        <!-- Active cycle -->
                                         <div class="dashboard-detail-item from-top-25">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
@@ -543,23 +661,65 @@
                                                             <th class="bg-transparent color-white-important">Role</th>
                                                             <th class="bg-transparent color-white-important">Missing Boss</th>
                                                             <th class="bg-transparent color-white-important">cut</th>
+                                                            <th class="bg-transparent color-white-important">Payment character</th>
                                                         </thead>
                                                         {% for match in matches.active_cycle %}
                                                             <tr>
                                                                 <td class="bg-transparent color-white-important">{{match.attendane.date_time|date:"Y-m-d H:i" }}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
-                                                                <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
+                                                                <td class="bg-transparent color-white-important">
+                                                                    {{match.missing_boss}}
+                                                                </td>
                                                                 <td class="bg-transparent color-white-important price-listener">{% if match.cut >= 1000 %}{% widthratio match.cut 1000 1 %} K{% else %}{{match.cut}}{% endif %}</td>
+                                                                <td class="bg-transparent color-white-important">
+                                                                    <form method="get" class="row">
+                                                                        <div class="col col-9">
+                                                                            <select name="payment_character" id="payment_character_{{match.id}}" class="payment_character">
+                                                                                <option value="0">Alt</option>
+                                                                                {% for alt in alts%}
+                                                                                <option value="{{alt.id}}">
+                                                                                    {{alt.name}}
+                                                                                </option>
+                                                                                {% endfor %}
+                                                                            </select>
+                                                                            <input type="hidden" value="{{match.id}}" name="at_pk">
+                                                                        </div>
+
+
+                                                                        <div class="col col-3">
+                                                                            <input type="submit" value="Go" class="btn btn-porpule color-white-important">
+                                                                        </div>
+                                                                    </form>
+                                                                </td>
                                                             </tr>
                                                         {% endfor %}
                                                     </table>
                                                 {% else %}
-                                                    <p class="min-height-200 center-r-c">Do not have started match yet</p>
+                                                    <p class="min-height-200 center-r-c">Do not have started attendance yet</p>
                                                 {% endif %}
                                             </div>
                                         </div>
 
 
+                                        <script>
+                                            pay_chars = document.getElementsByClassName("payment_character");
+
+                                            for (item of pay_chars){
+                                                let id = item.getAttribute('id');
+                                                id = id.split('_')[2];
+
+                                                pay_select = document.getElementById('payment_character_' + id);
+                                                {% for match in matches.active_cycle %}
+                                                    if ( "{{match.id}}" == id){
+                                                        {% if match.payment_character %}
+                                                            pay_select.value = "{{match.payment_character.id}}";
+                                                        {% endif %}
+                                                    }
+                                                {% endfor %}
+                                            }
+                                        </script>
+
+                                        <!-- History -->
                                         <div class="dashboard-detail-item from-top-25">
                                             <p class="center-icon-text">
                                                 <span class="material-symbols-outlined">
@@ -575,6 +735,8 @@
                                                             <th class="bg-transparent color-white-important">Role</th>
                                                             <th class="bg-transparent color-white-important">Missing Boss</th>
                                                             <th class="bg-transparent color-white-important">cut</th>
+                                                            <th class="bg-transparent color-white-important">Payment character</th>
+
                                                         </thead>
                                                         {% for match in matches.closed_cycle %}
                                                             <tr>
@@ -582,6 +744,7 @@
                                                                 <td class="bg-transparent color-white-important">{{match.role}}</td>
                                                                 <td class="bg-transparent color-white-important">{{match.missing_boss}}</td>
                                                                 <td class="bg-transparent color-white-important price-listener">{% if match.cut >= 1000 %}{% widthratio match.cut 1000 1 %} K{% else %}{{match.cut}}{% endif %}</td>
+                                                                <td class="bg-transparent color-white-important">{{match.payment_character}}</td>
                                                             </tr>
                                                         {% endfor %}
                                                     </table>
@@ -589,7 +752,7 @@
                                                     <p class="min-height-200 center-r-c">Do not have a finished match yet</p>
                                                 {% endif %}
                                             </div>
-                                        </div> 
+                                        </div>  
                                 </div>
                             </div>
                         </div>
@@ -655,6 +818,7 @@
                                                     </div>
                                                 </div>
 
+                                                <!-- Payment method: active and deactive two Select element -->
                                                 <script>
                                                     function payment_request_method() {
                                                         method = document.getElementById("payment-request-type").value;

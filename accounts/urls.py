@@ -20,7 +20,7 @@ urlpatterns = [
     path('dashboard/team/<str:team_name>/<int:team_pk>/', TeamDetailLink.as_view(), name='team_detail'),
     path('dashboard/team/join/response/', JoinTeamResponse.as_view(), name='join_team_response'),
     path('dashboard/team/member/remove/<int:team_pk>/<int:member_pk>/', RemoveTeamMember.as_view(), name='remove_team_member'),
-    path('dashboard/team/invite/<int:team_pk>/<int:user_pk>/', InviteUser.as_view(), name="invite_member"),
+    path('dashboard/team/send/invite/<int:team_pk>/', InviteUser.as_view(), name="invite_member"),
     path('dashboard/team/invite/<int:team_pk>/<int:user_pk>/response/<str:response>/', InviteUserResponse.as_view(), name="invite_member_response"),
     path('dashboard/team/role/<int:team_pk>/<int:user_pk>/', PositionMemberTeam.as_view(), name="position_team_member"),
 
@@ -44,7 +44,4 @@ urlpatterns = [
 
     #Send Ticket
     path('dashboard/ticket/submit/', SubmitTicket.as_view(), name="submit_ticket"),
-
-
-
 ]

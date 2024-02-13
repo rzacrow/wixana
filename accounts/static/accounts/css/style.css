@@ -53,7 +53,7 @@ a:hover, .nav-link:hover{
 }
 
 .pink-link{
-    text-decoration: none;color: #dc07d9;
+    text-decoration: none;color: #a687d7;
 
 }
 .pink-hover{
@@ -241,6 +241,7 @@ a:hover, .nav-link:hover{
 .btn-porpule{
     background-image: linear-gradient(to right, #c60073, #a200bb); box-shadow: 2px 2px 8px 3px #00000017; transition: 0.3s;
 }
+
 .btn-porpule:hover{
     transition: 0.3s;background-image: none; background-color: #780687; box-shadow: none; color: #f8f8f8 !important;
 }
@@ -505,7 +506,7 @@ footer{
     min-height: 286px !important; max-height: 286px !important;
 }
 input[type="text"], input[type="password"], input[type="email"], input[type="number"]{
-    border: none; border: 2px solid #98a1dd !important; padding: 5px !important; border-radius: 8px !important;
+    border: none; border: 2px solid #98a1dd !important; padding: 5px !important; border-radius: 8px ;
 }
 select{
     border: none; border: 2px solid #98a1dd !important; padding: 5px !important; border-radius: 8px !important;
@@ -815,4 +816,91 @@ select{
 }
 .without-min-height{
     min-height: auto !important;
+}
+
+.border-porpule{
+    border: 2px solid #762581;
+}
+.border-left-porpule{
+    border-left: 4px solid #762581;
+}
+
+.min-height-1000{
+    min-height: 1000px !important;
+}
+.min-height-177{
+    min-height: 179px !important;
+}
+.color-line{
+    border-image: linear-gradient(#d20a3f, #0bc3c6) 30;    border-width: 4px;
+    border-style: solid; background-color: none !important;
+}
+.btn-outline-porpule{
+    background-image: linear-gradient(to right, #c60073, #a200bb); color: #f8f8f8;max-height: 40px !important; max-width: 40px !important; text-align: center;
+    display: flex; justify-content: center; align-items: center;
+}
+.line-bg-rgb{
+    background-image: linear-gradient(to right, #d20a3f, #0bc3c6); min-height: 5px; width: 100%; height: 5px; border-radius: 1px; margin: 15px 0 10px 0;
+}
+
+.date_time_field{
+    border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;
+}
+p:has(> .form-label){
+    margin-bottom: 8px !important;
+}
+.color-dark{
+    color: #141414;
+}
+.min-height-250px{
+    min-height: 250px !important;
+}
+.without-scroll{
+    max-height: none !important; overflow-y: auto !important;
+}
+.select-custom-style{
+    border-radius: 2px !important; border: none !important; border-top:2px dashed #d20a3f !important;
+}
+.card-popup{
+    border-radius: 4px;    border-image: linear-gradient(#d20a3f, #0bc3c6) 30;    border-width: 1.5px;
+    border-style: solid; padding: 15px; background-color: #0000003a;
+}
+.btn-box-rgb{
+    background-image: linear-gradient(to right, #c60073, #a200bb);font-size: 28px; border-radius: 4px !important; border: none !important;
+    padding-right: 15px !important; padding-left: 15px !important;
+}
+.bg-dark-custom{
+    background-color: #00000014; color: #f8f8f8; border: 2px solid #404040; transition: 0.3s;
+}
+.bg-dark-custom:focus{
+    background-color: #00000014; color: #f8f8f8;border-image: linear-gradient(#d20a3f, #0bc3c6) 30;transition: 0.3s;
+    border-width: 4px; border-style: solid;
+
+}
+.bg-light-custom{
+    background-color: #876d6d !important; min-height: 2px; border-radius: 2px;
+}
+.font-size-12{
+    font-size: 12px;
+}
+.btn-border-bottom{
+    border-bottom: 3px solid #f8f8f8; color: #f8f8f8; border-radius: 0; transition: 0.1s;
+}
+.btn-border-bottom:hover{
+     color: #f8f8f8;border-bottom: 4px solid #f8f8f8;
+}
+.text-sm{
+    font-size: 16px !important;
+}
+.btn-specific-time{
+    border: none; border-radius: 8px; color: #111111; background-color: #f8f8f8; padding: 7px; display: flex; justify-content: center; align-items: center;
+}
+#time_popup{
+    background-color: #f8f8f8; border-radius: 8px; padding: 15px; position: absolute; min-width: 250px; flex-direction: column;top: 65px; right: 30px; box-shadow: 2px 2px 12px 3px #00000041;
+}
+.btn-sm-custom{
+    border: none;background-image: linear-gradient(to right, #c60073, #a200bb); padding: 2px 9px 2px 9px; border-radius: 6px; box-shadow: 0 0 4px 1px #00000048;transition: 0.3s; color: #f8f8f8;
+}
+.btn-sm-custom:hover{
+     background-image: none;transition: 0.3s; background-color: #a200bb;
 }

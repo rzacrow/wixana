@@ -11,14 +11,13 @@ class RunType(models.Model):
         return self.name
     
 
-
 class Cycle(models.Model):
     CYCLE_CHOICES = (
         ('O', 'Open'),
         ('C', 'Close'),
     )
     status = models.CharField(max_length=1, choices=CYCLE_CHOICES)
-    start_date = models.DateTimeField(default=timezone.now().today())
+    start_date = models.DateTimeField(default=timezone.datetime.now())
     end_date = models.DateTimeField()
     
 
@@ -123,9 +122,6 @@ class Role(models.Model):
         return role[0]
     
 
-    
-
-
 class AttendanceDetail(models.Model):
     attendane = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, default=Role.get_default_role, null=True)
@@ -156,6 +152,11 @@ class Payment(models.Model):
     paid_date = models.DateTimeField(blank=True, null=True)
     detail = models.ForeignKey(AttendanceDetail, on_delete=models.CASCADE, blank=True, null=True)
 
+class SpecificTime(models.Model):
+    time = models.TimeField()
+
+    def __str__(self) -> str:
+        return str(self.time)
 
 class CutInIR(models.Model):
     amount = models.IntegerField()

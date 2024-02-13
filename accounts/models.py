@@ -38,7 +38,6 @@ class User(AbstractUser):
             return self.username
     
 
-
 class Wallet(models.Model):
     player = models.OneToOneField(User, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0, verbose_name="Balance")
@@ -93,7 +92,6 @@ class Realm(models.Model):
         return self.name
     
 
-
 class Alt(models.Model):
     ALT_STATUS_CHOICES = (
         ('Verified', 'Verified'),
@@ -121,7 +119,6 @@ class RemoveAltRequest(models.Model):
     status = models.CharField(max_length=8, choices=REMOVE_ALT_REQUEST_STATUS)
 
 
-
 class Team(models.Model):
     TEAM_STATUS_CHOICES = (
         ('Verified','Verified'),
@@ -141,7 +138,6 @@ def populate_parents(sender, instance, created, **kwargs):
     if created:
         instance.team_url = f"{settings.ALLOWED_HOSTS[0]}/dashboard/team/{instance.name}/{instance.id}/"
         instance.save()
-
 
 
 class TeamDetail(models.Model):

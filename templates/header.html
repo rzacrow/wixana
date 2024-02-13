@@ -1,7 +1,7 @@
 {% load static %}
   <div class="navbar navbar-expand-lg fixed-top nav-color">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">
+      <a class="navbar-brand" href="{% url 'login' %}">
         <img src="{% static 'accounts/images/logo.png' %}" width="80" height="80" alt=""><span class="color-white">WIXANA</span>
       </a>
       <button class="navbar-toggler border-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
@@ -9,9 +9,7 @@
       </button>
       <div class="collapse navbar-collapse nav justify-content-center" id="navbarTogglerDemo01">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item flex-center">
-                <a class="nav-link color-white font-bold font-size-20" href="{% url 'login' %}"><i class="bi bi-house-door-fill"></i>&nbsp;Home</a>
-              </li>
+             
 
               <li class="nav-item flex-center">
                 <a class="nav-link color-white font-bold font-size-20 center-icon-text" href="#"><span class="material-symbols-outlined">
