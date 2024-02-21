@@ -17,9 +17,11 @@ class ViewAttendance(View):
                     cut_dist = CutDistributaion.objects.get(attendance=attendance)
                     a_detail = AttendanceDetail.objects.filter(attendane=attendance)
                     current_realm = CurrentRealm.objects.filter(attendance=attendance)
-
+                    realms_count = 0
                     if not current_realm:
                         current_realm = None
+                    else:
+                        realms_count = current_realm.count()
 
                     cycles = Cycle.objects.filter(status="O")
                     run_types = RunType.objects.filter()
@@ -31,6 +33,8 @@ class ViewAttendance(View):
                     teams = Team.objects.filter()
                     specific_time = SpecificTime.objects.filter()
                     team_detail = TeamDetail.objects.filter()
+
+
 
                     context = {
                         'cycles' : cycles,
@@ -47,7 +51,8 @@ class ViewAttendance(View):
                         'guild' : guild,
                         'cut_dist' : cut_dist,
                         'a_detail' : a_detail,
-                        'current_realm' : current_realm
+                        'current_realm' : current_realm,
+                        'realms_count' : realms_count,
                     }
 
                     return render(request, 'accounts/attendance.html', context)
@@ -233,7 +238,7 @@ class ViewAttendance(View):
 
                 
                 #if the realm type is multirealm
-                if realm_type == "2":
+                if (realm_type == "2") or (realm_type == "1"):
                     realm_indexes = list()
                     realm_error = 0
                     for key in request.POST.keys():
@@ -263,6 +268,7 @@ class ViewAttendance(View):
                         
                         if realm_error > 0:
                             messages.add_message(request, messages.WARNING, f"{realm_error} realms, were not added")
+
 
                 messages.add_message(request, messages.SUCCESS, "Attendance was saved successfully")
                 return redirect("view_attendance" , attendance.id)
@@ -415,7 +421,7 @@ class CreateAttendance(View):
 
                     
                     #if the realm type is multirealm
-                    if realm_type == "2":
+                    if (realm_type == "2") or (realm_type == "1"):
                         realm_indexes = list()
                         realm_error = 0
                         for key in request.POST.keys():

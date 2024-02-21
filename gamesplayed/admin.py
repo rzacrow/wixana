@@ -143,6 +143,33 @@ class CutInIR(ModelAdmin):
         return obj.date_time.strftime("%Y-%m-%d")
     list_display = ['amount', 'date_time_show']
 
+class at_in_form(forms.ModelForm):
+    class Meta:
+        model = Attendance
+        fields = ['date_time', 'status', 'total_pot']
+
+        labels = {
+            'status' : "Status",
+            'total_pot' : 'Total pot'
+
+        }
+
+
+class AttendanceInline(StackedInline):
+    model = Attendance
+    form = at_in_form
+
+    fieldsets = (
+            (None, {
+                "fields": (
+                    'date_time',
+                    ('status' , 'total_pot')
+                ),
+            }),
+        )
+    extra = 1
+
+
 @admin.register(Cycle)
 class CycleAdmin(ModelAdmin):
     @admin.display(description="Start Date")
@@ -167,6 +194,11 @@ class CycleAdmin(ModelAdmin):
         'end_date',
         'status',
     ]
+
+    inlines = [
+        AttendanceInline
+    ]
+
     list_filter_submit = True  # Submit button at the bottom of the filter
 
     def closed_status(self, request, objects):

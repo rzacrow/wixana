@@ -126,6 +126,9 @@
 
                                 //div parent
                                 const parent_realm_section = document.getElementById('parent-realm-detail');
+                                let realm_detail_box = document.getElementById('select-realm-box');
+                                realm_detail_box.style.display = 'flex';
+                                document.getElementById('add-realm').style.display = 'none';
 
                                 //Create realm item
                                 function create_new_realm(){
@@ -185,17 +188,23 @@
                                     parent_realm_section.appendChild(realm_section);
                                 }
                                 
+
+                                create_new_realm();
+
                                 //ever realm method was changed: (realms visibility) 
                                 function roletypechange(){
                                     let element = document.getElementById('realm-method-select');
                                     let realm_detail_box = document.getElementById('select-realm-box');
                                     parent_realm_section.innerHTML = "";
+
                                     if (element.value == 2) {
+                                        document.getElementById('add-realm').style.display = 'block';
                                         realm_detail_box.style.display = "flex";
                                         create_new_realm();
                                     } else{
-                                        realm_detail_box.style.display = 'none';
-                                
+                                        document.getElementById('add-realm').style.display = 'none';
+                                        realm_detail_box.style.display = "flex";
+                                        create_new_realm();
                                     }
                                 }
                                 
@@ -1088,7 +1097,12 @@
             {% endif %}
             
             {% if current_realm %}
-                make_change_input("realm-method-select", "2");
+                {% if realms_count == 1 %}
+                    make_change_input("realm-method-select", "1");
+                {% else %}
+                    make_change_input("realm-method-select", "2");
+                {% endif %}
+
                 roletypechange();
 
                 parent_realm_section.innerHTML = "";
