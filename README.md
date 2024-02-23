@@ -1,2 +1,2 @@
 Link:
-https://www.wixana.ir
+https://wixana.ir
